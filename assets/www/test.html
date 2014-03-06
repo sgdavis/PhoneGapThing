@@ -13,7 +13,8 @@
 	<script type="text/javascript" charset="utf-8" src="main.js"></script>
 </head>
     
-<div id="loginPage" data-role="page">
+<body onLoad="getData();">
+<div id="menuPage" data-role="page">
 
     <div data-role="header">
         <h1>GitChecker 2000</h1>
@@ -21,23 +22,8 @@
 
     <div data-role="content">    
 
-        <form id="loginForm">
-        <div data-role="fieldcontain" class="ui-hide-label">
-            <label for="username">Username:</label>
-            <input type="text" name="username" id="username" value="" placeholder="ajyong" />
-        </div>
-
-        <div data-role="fieldcontain" class="ui-hide-label">
-            <label for="password">Password:</label>
-            <input type="password" name="password" id="password" value="" placeholder="Password" />
-        </div>
-
-		<div data-role="fieldcontain" class="ui-hide-label">
-            <label for="repository">Repository:</label>
-            <input type="text" name="repository" id="repository" value="" placeholder="example-project" />
-        </div>
-		
-        <input type="button" value="Grab Data" id="submitButton" onCLick="validateData()"/>
+        <form id="menuForm">		
+        <input type="button" value="Grab Data" id="submitButton" onCLick="getData()"/>
         </form>
         
     </div>
@@ -45,6 +31,13 @@
     <div data-role="footer">
         <h4>&copy; Head In The Sand Industries</h4>
     </div>
+    
+    <span id="issue_count"></span>
+    
+    <div id="issues">
+	    <ul id="issue_list">
+	    </ul>
+	</div>
 
 </div>
 
