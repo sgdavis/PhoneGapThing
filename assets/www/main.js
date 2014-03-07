@@ -12,13 +12,13 @@
 		window.location = "test.html";
     }
     
-    function validateData() 
+    function checkUserRepos() 
 	{
 	    $.ajax
 	    (
     		{
         		type: "GET",
-        		url: "https://api.github.com/repos/" + $('#username').val() + "/" + $('#repository').val() + "/issues",
+        		url: "https://api.github.com/users/" + $('#username').val() + "/repos?type=all",
         		dataType: "json",
         		success: function(result) 
         		{
@@ -26,7 +26,41 @@
 		            {
 		            	localStorage['username'] = $('#username').val();
 		            	localStorage['password'] = $('#password').val();
-		            	localStorage['repository'] = $('#repository').val();
+		            }
+		            
+		            for(i in result)
+		            {
+		            	<!-- Link to issue hidden under issue name -->
+                		$("#repo_list").append
+                		(
+                    		"<input type='button' name='sel' value='" 
+                    		+ result[i].name 
+                    		+ "' onclick=validateData('" 
+                    		+ String(result[i].owner.login) 
+                    		+ "','" 
+                    		+ String(result[i].name) 
+                    		+ "');> <br>"
+                		);
+		            }
+		        }
+		    }
+		)
+	}
+	
+	function validateData(ownerName,repoName) 
+	{
+		$.ajax
+	    (
+    		{
+        		type: "GET",
+        		url: "https://api.github.com/repos/" + ownerName + "/" + repoName + "/issues",
+        		dataType: "json",
+        		success: function(result) 
+        		{
+        			if(result.length != 0)
+		            {
+		            	localStorage['ownername'] = ownerName;
+		            	localStorage['repository'] = repoName;
 		            	localStorage['resultNum'] = String(result.length);
 		            	callAnothePage();
 		            }
@@ -44,7 +78,7 @@
 	    (
 	    	{
         		type: "GET",
-        		url: "https://api.github.com/repos/" + localStorage['username'] + "/" + localStorage['repository'] + "/issues",
+        		url: "https://api.github.com/repos/" + localStorage['ownername'] + "/" + localStorage['repository'] + "/issues",
         		dataType: "json",
         		success: function(result) 
         		{	
@@ -194,6 +228,7 @@
     
                 		console.log("i: " + i);
             		}
+
 		            console.log(result);
 		            document.getElementById("issue_count").innerHTML = "";
 					$("#issue_count").append("Total Issues: " + totalIssues);

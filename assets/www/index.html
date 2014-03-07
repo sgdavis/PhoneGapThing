@@ -24,23 +24,23 @@
         <form id="loginForm">
         <div data-role="fieldcontain" class="ui-hide-label">
             <label for="username">Username:</label>
-            <input type="text" name="username" id="username" value="" placeholder="ajyong" />
+            <input type="text" name="username" id="username" value="" placeholder="Username" />
         </div>
 
         <div data-role="fieldcontain" class="ui-hide-label">
             <label for="password">Password:</label>
             <input type="password" name="password" id="password" value="" placeholder="Password" />
         </div>
-
-		<div data-role="fieldcontain" class="ui-hide-label">
-            <label for="repository">Repository:</label>
-            <input type="text" name="repository" id="repository" value="" placeholder="example-project" />
-        </div>
 		
-        <input type="button" value="Grab Data" id="submitButton" onCLick="validateData()"/>
+        <input type="button" value="List Repos" id="submitButton" onCLick="checkUserRepos()"/>
         </form>
         
     </div>
+    
+    <div id="repos">
+	    <ul id="repo_list">
+	    </ul>
+	</div>
 
     <div data-role="footer">
         <h4>&copy; Head In The Sand Industries</h4>
