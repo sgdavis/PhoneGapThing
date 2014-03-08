@@ -1,0 +1,45 @@
+<!DOCTYPE HTML>
+<html>
+
+<head>
+	<meta name="viewport" content="width=320; user-scalable=no" />
+	<meta http-equiv="Content-type" content="text/html; charset=utf-8">
+	<title>GitChekcker 2000</title>
+	<link rel="stylesheet" href="jquery.mobile/jquery.mobile-1.0rc2.css" type="text/css" charset="utf-8" />
+	<script src="http://ajax.googleapis.com/ajax/libs/jquery/1.7.1/jquery.min.js" type="text/javascript"></script>
+	<script type="text/javascript" src="js/jquery-1.7.min.js"></script>
+	<script type="text/javascript" charset="utf-8" src="js/phonegap-1.2.0.js"></script>
+	<script src="jquery.mobile/jquery.mobile-1.0rc2.js"></script>
+	<script type="text/javascript" charset="utf-8" src="main.js"></script>
+</head>
+    
+<body onLoad="pageLoader();">
+<div id="menuPage" data-role="page">
+
+    <div data-role="header">
+        <h1>GitChecker 2000</h1>
+    </div>
+
+    <div data-role="content">    
+
+        <form id="menuForm">
+        <input type="button" value="Return" id="submitButton" onCLick="clearData()"/>
+        </form>
+        
+    </div>
+
+    <div data-role="footer">
+        <h4>&copy; Head In The Sand Industries</h4>
+    </div>
+    
+    <span id="issue_count"></span>
+    
+    <div id="issues">
+	    <ul id="issue_list">
+	    </ul>
+	</div>
+
+</div>
+
+</body>
+</html>
