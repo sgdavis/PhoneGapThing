@@ -13,6 +13,10 @@
 		{
 			getMyIssues();
 		}
+		if(window.location == "file:///android_asset/www/display.html" && localStorage['whatToLoad'] == "SelectForComments")
+		{
+			getComments();
+		}
 		else
 		{
 			alert(window.location + " : " + localStorage['whatToLoad']);
@@ -43,7 +47,7 @@
 		            
 		            for(i in result)
 		            {
-		            	<!-- Link to issue hidden under issue name -->
+		            	<!-- Button to set whta repo we're looking into -->
                 		$("#repo_list").append
                 		(
                     		"<input type='button' name='sel' value='" 
@@ -62,6 +66,7 @@
 	
 	function callFilterPage()
 	{
+		localStorage['whatToLoad'] = "MyIssues";
 		window.location = "display.html";
 	}
 	
@@ -75,8 +80,6 @@
 	{
 		result = getOpenData();
 		var totalIssues = 0;
-		
-		msg();
 		
 		for( i in result ) 
 		{			
@@ -225,24 +228,122 @@
 		$("#issue_count").append("Total Issues: " + totalIssues);
 	}
 	
+	function loadComments()
+	{
+		localStorage['whatToLoad'] = "SelectForComments";
+		window.location = "display.html";
+	}
+	
 	function getComments()
 	{
-		window.location = "display.html";
+		result = getOpenData();
+		
+		for( i in result ) 
+		{			
+			if(result[i].comments != 0)
+			{
+	    		<!-- Button to select what issue we're looking into -->
+        		$("#issue_list").append
+        		(
+            		"<input type='button' name='sel' value='" 
+            		+ result[i].title 
+            		+ "' onclick=showComments('" 
+            		+ String(result[i].number)
+            		+ "');> <br>"
+        		);
+	
+	    		console.log("i: " + i);
+			}
+		}
+		
+		result = getClosedData();
+		
+		for( i in result ) 
+		{			
+			if(result[i].comments != 0)
+			{
+	    		<!-- Button to select what issue we're looking into -->
+        		$("#issue_list").append
+        		(
+            		"<input type='button' name='sel' value='" 
+            		+ result[i].title 
+            		+ "' onclick=showComments('" 
+            		+ String(result[i].number)
+            		+ "');> <br>"
+        		);
+	
+	    		console.log("i: " + i);
+			}
+		}
+	}
+	
+	function showComments(issueNumber)
+	{
+		$("#issue_list").html("");
+		localStorage['whatToLoad'] = "ShowingComments";		
+
+		$.ajax
+	    (
+    		{
+        		type: "GET",
+        		async: false,
+        		url: "https://api.github.com/repos/" + localStorage['ownername'] + "/" + localStorage['repository'] + "/issues/" + issueNumber + "/comments",
+        		dataType: "json",
+        		success: function(result) 
+        		{
+        			if(result.length != 0)
+		            {
+		            	for( i in result ) 
+						{			
+				    		<!-- Name of user who submitted comment -->
+				    		$("#issue_list").append
+				    		(
+				        		"Date Closed: " + result[i].user.login + "<br>"
+				    		);
+				    		
+				    		<!-- Date user submitted comment -->
+				    		$("#issue_list").append
+				    		(
+				        		"Date Closed: " + result[i].updated_at + "<br>"
+				    		);
+				    		
+				    		<!-- Comment body -->
+				    		$("#issue_list").append
+				    		(
+				        		"Date Closed: " + result[i].body + "<br><br>"
+				    		);
+				    		
+				    		console.log("i: " + i);
+						}
+		            }
+		        }
+		    }
+		)
 	}
 	
 	function getClosedIssues()
 	{
+		localStorage['whatToLoad'] = "MyIssues";
 		window.location = "display.html";
 	}
 	
 	function getMilestoneDates()
 	{
+		localStorage['whatToLoad'] = "MyIssues";
 		window.location = "display.html";
 	}
 	
 	function clearData()
 	{
-		window.location = "menu.html";
+		if(localStorage['whatToLoad'] == "ShowingComments")
+		{
+			localStorage['whatToLoad'] = "SelectForComments";
+			window.location = "display.html";
+		}
+		else
+		{
+			window.location = "menu.html";
+		}
 	}
 	
 	function changeUser()
