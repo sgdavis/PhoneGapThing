@@ -13,9 +13,13 @@
 		{
 			getMyIssues();
 		}
-		if(window.location == "file:///android_asset/www/display.html" && localStorage['whatToLoad'] == "SelectForComments")
+		else if(window.location == "file:///android_asset/www/display.html" && localStorage['whatToLoad'] == "SelectForComments")
 		{
 			getComments();
+		}
+		else if(window.location == "file:///android_asset/www/display.html" && localStorage['whatToLoad'] == "ClosedIssues")
+		{
+			getClosedIssues();
 		}
 		else
 		{
@@ -30,6 +34,8 @@
     
     function checkUserRepos() 
 	{
+		$("#repo_list").html("");
+		
 	    $.ajax
 	    (
     		{
@@ -298,19 +304,19 @@
 				    		<!-- Name of user who submitted comment -->
 				    		$("#issue_list").append
 				    		(
-				        		"Date Closed: " + result[i].user.login + "<br>"
+				        		"Comment By: " + result[i].user.login + "<br>"
 				    		);
 				    		
 				    		<!-- Date user submitted comment -->
 				    		$("#issue_list").append
 				    		(
-				        		"Date Closed: " + result[i].updated_at + "<br>"
+				        		"Date Commented: " + result[i].updated_at + "<br>"
 				    		);
 				    		
 				    		<!-- Comment body -->
 				    		$("#issue_list").append
 				    		(
-				        		"Date Closed: " + result[i].body + "<br><br>"
+				        		"Comment: " + result[i].body + "<br><br>"
 				    		);
 				    		
 				    		console.log("i: " + i);
@@ -321,10 +327,49 @@
 		)
 	}
 	
+	function loadClosedIssues()
+	{
+		localStorage['whatToLoad'] = "ClosedIssues";
+		window.location = "display.html";
+	}
+	
 	function getClosedIssues()
 	{
-		localStorage['whatToLoad'] = "MyIssues";
-		window.location = "display.html";
+		results = getClosedData();
+		
+		for( i in results ) 
+		{		    		
+			$.ajax
+		    (
+		    	{
+	        		type: "GET",
+	        		async: false,
+	        		url: results[i].url,
+	        		dataType: "json",
+	        		success: function(result) 
+	        		{	            	
+	        			<!-- Link to issue hidden under issue name -->
+			    		$("#issue_list").append
+			    		(
+			        		"<li><a href='" + result.url + "' target='_blank'>" +
+			        		result.title + "</a></li>"
+			    		);
+			    			
+			    		<!-- Name of user who closed issue -->
+			    		$("#issue_list").append
+			    		(
+			        		"Closed By: " + result.closed_by.login + "<br>"
+			    		);
+			    		
+			    		<!-- Date user closed issue -->
+			    		$("#issue_list").append
+			    		(
+			        		"Date Closed: " + result.closed_at + "<br>"
+			    		);
+			    	}
+			    }
+			)
+		}
 	}
 	
 	function getMilestoneDates()
@@ -396,6 +441,7 @@
 	
 	function getClosedData() 
 	{
+		var returnData;
 		$.ajax
 	    (
 	    	{
@@ -405,10 +451,12 @@
         		dataType: "json",
         		success: function(result) 
         		{
-        			return result;
+        			returnData = result;
         		}
         	}
         )
+        
+        return returnData;
 	}
 
 	function getData() 
