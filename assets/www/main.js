@@ -447,10 +447,13 @@
 		                <!-- Issues -->
 		                $("#issue_list").append
 		                (
-		                    "Progress: " + 100*(result[i].closed_issues / (result[i].closed_issues + result[i].open_issues) )
-		                    + "% ( " + result[i].open_issues+ " open : "
+		                	"Progress: " + 100*( result[i].closed_issues / (result[i].closed_issues + result[i].open_issues) ) + "%<br>"
+		                	+ "<progress value='" 
+		                		+ 100*( result[i].closed_issues / (result[i].closed_issues + result[i].open_issues) ) 
+		                		+ "' max='100'>70 %</progress> <br>"
+		                    + "( " + result[i].open_issues+ " open : "
 		                    + result[i].closed_issues + " closed ) "
-		                    + "<br>"
+		                    + "<br><br>"
 		                );
     
                 		console.log("i: " + i);
