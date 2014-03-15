@@ -2,7 +2,9 @@ package com.example.storyboardthing;
 
 import java.text.SimpleDateFormat;
 import java.util.Date;
+
 import org.apache.cordova.DroidGap;
+
 import android.view.Menu;
 import android.app.Activity;
 import android.app.Notification;
@@ -10,6 +12,7 @@ import android.app.NotificationManager;
 import android.app.PendingIntent;
 import android.content.Intent;
 import android.os.Bundle;
+import android.os.Handler;
 import android.view.View;
 import android.widget.Button;
 import android.widget.TextView;
@@ -24,6 +27,8 @@ public class MainActivity extends DroidGap
 	public void onCreate(Bundle savedInstanceState) 
 	{
 		super.onCreate(savedInstanceState);	
+		super.init();
+		super.loadUrl("file:///android_asset/www/index.html");
 		super.setIntegerProperty("splashscreen", R.drawable.splash);
 		setContentView(R.layout.activity_main);
 		
@@ -58,12 +63,29 @@ public class MainActivity extends DroidGap
 				@Override
 				public void onClick(View v) 
 				{
-					Notify("Title: Meeting with Business","Msg:Pittsburg 10:00 AM EST ");
+					startChecking();
 				}
 			}
 		);
 		
 		lastChecked = System.currentTimeMillis();
+	}
+	
+	public void startChecking()
+	{
+		final Handler handler = new Handler();
+		handler.postDelayed
+		(
+				new Runnable() 
+				{
+					@Override
+					public void run() 
+					{
+						Notify("Title: Meeting with Business","Msg:Pittsburg 10:00 AM EST ");
+						startChecking();
+					}
+				}, 100
+		);
 	}
 	
 	@Override
@@ -91,5 +113,16 @@ public class MainActivity extends DroidGap
 
 		notification.setLatestEventInfo(MainActivity.this, notificationTitle, notificationMessage, pendingIntent);
 		notificationManager.notify(9999, notification);
+	}
+	
+	@Override
+	public void onPause()
+	{
+		super.onPause();
+		if(super.appView != null)
+		{
+			super.appView.loadUrl("javascript:try{PhoneGap.onResume.fire();}catch(e){};");
+			super.appView.resumeTimers();
+		}
 	}
 }
