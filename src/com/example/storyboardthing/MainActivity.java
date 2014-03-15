@@ -2,7 +2,8 @@ package com.example.storyboardthing;
 
 import java.text.SimpleDateFormat;
 import java.util.Date;
-
+import org.apache.cordova.DroidGap;
+import android.view.Menu;
 import android.app.Activity;
 import android.app.Notification;
 import android.app.NotificationManager;
@@ -15,7 +16,7 @@ import android.widget.TextView;
 
 import com.example.storyboardthing.R;
 
-public class MainActivity extends Activity 
+public class MainActivity extends DroidGap 
 {
 	private long lastChecked;
 	
@@ -23,6 +24,7 @@ public class MainActivity extends Activity
 	public void onCreate(Bundle savedInstanceState) 
 	{
 		super.onCreate(savedInstanceState);	
+		super.setIntegerProperty("splashscreen", R.drawable.splash);
 		setContentView(R.layout.activity_main);
 		
 		TextView textview = (TextView) findViewById(R.id.textView1);
@@ -36,7 +38,7 @@ public class MainActivity extends Activity
 			String checkString = formatter.format(new Date(lastCheckedTime));
 			if(textview != null)
 			{
-				textview.setText("Last called at " + callString + "\nLast viewed at" + checkString);
+				textview.setText("Last called at " + callString + "\nLast viewed at " + checkString);
 			}
 		}
 		else
@@ -63,6 +65,13 @@ public class MainActivity extends Activity
 		
 		lastChecked = System.currentTimeMillis();
 	}
+	
+	@Override
+    public boolean onCreateOptionsMenu(Menu menu) {
+        // Inflate the menu; this adds items to the action bar if it is present.
+        getMenuInflater().inflate(R.menu.main, menu);
+        return true;
+    }
 
 	@SuppressWarnings("deprecation")
 	private void Notify(String notificationTitle, String notificationMessage) 
