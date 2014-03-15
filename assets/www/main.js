@@ -7,6 +7,23 @@
 	    							+ localStorage['resultNum']);
 	}
 	
+	function alertDismissed() 
+	{
+	    // do something
+	}
+	
+	function showAlert()
+	{
+		navigator.notification.alert
+		(
+		    'You are the winner!',  // message
+		    alertDismissed,         // callback
+		    'Game Over',            // title
+		    'Done'                  // buttonName
+		);
+	}
+		
+	
 	function pageLoader()
 	{
 		if(window.location == "file:///android_asset/www/display.html" && localStorage['whatToLoad'] == "MyIssues")

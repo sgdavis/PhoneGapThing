@@ -10,7 +10,35 @@
 	<script type="text/javascript" src="js/jquery-1.7.min.js"></script>
 	<script type="text/javascript" charset="utf-8" src="js/phonegap-1.2.0.js"></script>
 	<script src="jquery.mobile/jquery.mobile-1.0rc2.js"></script>
+	<script type="text/javascript" charset="utf-8" src="cordova-1.5.0.js"></script>
 	<script type="text/javascript" charset="utf-8" src="main.js"></script>
+	<script type="text/javascript" charset="utf-8" src="SystemNotification.js"></script>
+	
+	<script type="text/javascript" charset="utf-8">
+		document.addEventListener("deviceready", onDeviceReady, true);
+	    function onDeviceReady() {
+	
+	        navigator.notification.alert("PhoneGap is working", function(){}, "", "");
+	        var timeDelay = 1000 * 20;
+			setInterval ( showAlert, timeDelay );
+	    } 
+	    
+		function alertDismissed() 
+		{
+		    // do something
+		}
+		
+		function showAlert()
+		{		
+			navigator.systemNotification.notification.alert
+			(
+			    'You are the winner!',  // message
+			    alertDismissed,         // callback
+			    'Game Over',            // title
+			    'Done'                  // buttonName
+			);
+		}
+	</script>
 </head>
     
 <div id="loginPage" data-role="page">
