@@ -1,9 +1,18 @@
 package com.example.storyboardthing;
 
+import java.io.IOException;
 import java.text.SimpleDateFormat;
 import java.util.Date;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 import org.apache.cordova.DroidGap;
+import org.apache.cordova.api.LOG;
+import org.kohsuke.github.GHEventInfo;
+import org.kohsuke.github.GHRepository;
+import org.kohsuke.github.GitHub;
+import org.kohsuke.github.PagedIterable;
 
 import android.view.Menu;
 import android.app.Activity;
@@ -11,6 +20,7 @@ import android.app.Notification;
 import android.app.NotificationManager;
 import android.app.PendingIntent;
 import android.content.Intent;
+import android.os.AsyncTask;
 import android.os.Bundle;
 import android.os.Handler;
 import android.view.View;
@@ -22,6 +32,7 @@ import com.example.storyboardthing.R;
 public class MainActivity extends DroidGap 
 {
 	private long lastChecked;
+	public TextView textview;
 	
 	@Override
 	public void onCreate(Bundle savedInstanceState) 
@@ -32,7 +43,7 @@ public class MainActivity extends DroidGap
 		super.setIntegerProperty("splashscreen", R.drawable.splash);
 		setContentView(R.layout.activity_main);
 		
-		TextView textview = (TextView) findViewById(R.id.textView1);
+		textview = (TextView) findViewById(R.id.textView1);
 			
 		if(getIntent().getBooleanExtra("FromPrevious",false) == true)
 		{
@@ -73,6 +84,9 @@ public class MainActivity extends DroidGap
 	
 	public void startChecking()
 	{
+		AsyncTaskRunner runner = new AsyncTaskRunner();
+	    runner.execute();
+	    
 		final Handler handler = new Handler();
 		handler.postDelayed
 		(
@@ -84,7 +98,7 @@ public class MainActivity extends DroidGap
 						Notify("Title: Meeting with Business","Msg:Pittsburg 10:00 AM EST ");
 						startChecking();
 					}
-				}, 100
+				}, 10000
 		);
 	}
 	
@@ -125,4 +139,84 @@ public class MainActivity extends DroidGap
 			super.appView.resumeTimers();
 		}
 	}
+
+    public void testJavaAPI() throws IOException {
+    	GitHub github = GitHub.connect();
+    	GHRepository repository = github.getRepository("example-project");
+    	List<GHEventInfo> eventList = repository.listEvents().asList();
+    	
+    	TextView textview = (TextView) findViewById(R.id.textView1);
+    	String tempString = "";
+    	
+    	if(textview != null)
+    	{
+    		for(int i = 0 ; i < eventList.size(); i++)
+    		{
+    			GHEventInfo tempEventInfo = eventList.get(i);
+    			tempString = tempString + tempEventInfo.toString();
+    		}
+    		
+    		textview.setText( tempString );
+    	}
+    }
+    
+    class AsyncTaskRunner extends AsyncTask<String, String, String> 
+    {
+  	  	private String resp;
+
+  	  	@Override
+  	  	protected String doInBackground(String... params) 
+  	  	{
+  	  		try
+  			{
+	  	      	GitHub github = GitHub.connectUsingPassword("sgdavis", "Z4ngetsuSeth");
+	  	      	LOG.i("WAFFLE", "connected");
+	  	      	GHRepository repository = github.getRepository("ajyong/example-project");
+	  	      	LOG.i("WAFFLE", "repod");
+	  	      	List<GHEventInfo> eventList = repository.listEvents().asList();
+	  	      	LOG.i("WAFFLE", "evented");
+	  	      	
+	  	      	String tempString = "";
+	  	      	
+	  	      	if(textview != null)
+	  	      	{
+	  	      		for(int i = 0 ; i < eventList.size(); i++)
+	  	      		{
+	  	      			GHEventInfo tempEventInfo = eventList.get(i);
+	  	      			tempString = tempString + tempEventInfo.toString();
+	  	      		}
+	  	      		
+	  	      		LOG.i("WAFFLE", tempString );
+	  	      	}
+  			}
+  			catch(IOException e)
+  			{
+  				//textview.setText( "exception" );
+  			}
+  	  		return "";
+  	  	}
+
+  	  	@Override
+  	  	protected void onPostExecute(String result) 
+  	  	{
+  	  		// execution of result of Long time consuming operation
+  	  		//textview.setText(resp);
+  	  	}
+
+  	  	@Override
+  	  	protected void onPreExecute() 
+  	  	{
+  	  		resp = "waffle";
+  	  		// Things to be done before execution of long running operation. For
+  	  		// example showing ProgessDialog
+  	  	}
+
+  	  	@Override
+  	  	protected void onProgressUpdate(String... text) 
+  	  	{
+  	  		//textview.setText(resp);
+  	  		// Things to be done while execution of long running operation is in
+  	  		// progress. For example updating ProgessDialog
+  	  	}
+  	}
 }

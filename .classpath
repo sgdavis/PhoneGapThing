@@ -1,10 +1,18 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <classpath>
+	<classpathentry exported="true" kind="lib" path="lib/jackson-annotations-2.2.3.jar"/>
+	<classpathentry exported="true" kind="lib" path="lib/jackson-databind-2.2.3.jar"/>
+	<classpathentry exported="true" kind="lib" path="lib/jackson-core-2.2.3.jar" sourcepath="lib/jackson-core-2.2.3-sources.jar"/>
 	<classpathentry kind="src" path="src"/>
 	<classpathentry kind="src" path="gen"/>
-	<classpathentry kind="con" path="com.android.ide.eclipse.adt.ANDROID_FRAMEWORK"/>
+	<classpathentry exported="true" kind="con" path="com.android.ide.eclipse.adt.ANDROID_FRAMEWORK"/>
 	<classpathentry exported="true" kind="con" path="com.android.ide.eclipse.adt.LIBRARIES"/>
 	<classpathentry exported="true" kind="con" path="com.android.ide.eclipse.adt.DEPENDENCIES"/>
-	<classpathentry kind="lib" path="libs/cordova-1.5.0.jar"/>
+	<classpathentry exported="true" kind="lib" path="lib/android-support-v4.jar"/>
+	<classpathentry exported="true" kind="lib" path="lib/commons-codec-1.9.jar" sourcepath="lib/commons-codec-1.9-sources.jar"/>
+	<classpathentry exported="true" kind="lib" path="lib/commons-io-2.4.jar" sourcepath="lib/commons-io-2.4-sources.jar"/>
+	<classpathentry exported="true" kind="lib" path="lib/commons-lang3-3.3.jar"/>
+	<classpathentry exported="true" kind="lib" path="lib/cordova-1.5.0.jar"/>
+	<classpathentry exported="true" kind="lib" path="lib/github-api-1.49.jar"/>
 	<classpathentry kind="output" path="bin/classes"/>
 </classpath>
