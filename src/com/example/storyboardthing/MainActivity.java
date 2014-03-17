@@ -14,6 +14,7 @@ import org.kohsuke.github.GHRepository;
 import org.kohsuke.github.GitHub;
 import org.kohsuke.github.PagedIterable;
 
+import android.text.method.ScrollingMovementMethod;
 import android.view.Menu;
 import android.app.Activity;
 import android.app.Notification;
@@ -44,6 +45,7 @@ public class MainActivity extends DroidGap
 		setContentView(R.layout.activity_main);
 		
 		textview = (TextView) findViewById(R.id.textView1);
+		textview.setMovementMethod(new ScrollingMovementMethod());
 			
 		if(getIntent().getBooleanExtra("FromPrevious",false) == true)
 		{
@@ -98,7 +100,7 @@ public class MainActivity extends DroidGap
 						Notify("Title: Meeting with Business","Msg:Pittsburg 10:00 AM EST ");
 						startChecking();
 					}
-				}, 10000
+				}, 100000
 		);
 	}
 	
@@ -183,17 +185,33 @@ public class MainActivity extends DroidGap
 	  	      		for(int i = 0 ; i < eventList.size(); i++)
 	  	      		{
 	  	      			GHEventInfo tempEventInfo = eventList.get(i);
-	  	      			tempString = tempString + tempEventInfo.toString();
+	  	      			tempString = tempString + tempEventInfo.toString() + "\n";
 	  	      		}
 	  	      		
 	  	      		LOG.i("WAFFLE", tempString );
 	  	      	}
+	  	      	
+	  	      	displayText(tempString);
   			}
   			catch(IOException e)
   			{
   				//textview.setText( "exception" );
   			}
   	  		return "";
+  	  	}
+  	  	
+  	  	public void displayText(final String strValue) 
+  	  	{         
+  	  		runOnUiThread
+  	  		(
+  	  			new Runnable() 
+	  	  		{
+	  	  			public void run() 
+	  	  			{
+	  	  				textview.setText(strValue);   
+	  	  			}
+	  	  		}
+  	  		);
   	  	}
 
   	  	@Override
