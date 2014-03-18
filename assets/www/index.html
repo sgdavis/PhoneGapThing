@@ -18,7 +18,7 @@
 		document.addEventListener("deviceready", onDeviceReady, true);
 	    function onDeviceReady() {
 	
-	        navigator.notification.alert("PhoneGap is working", function(){}, "", "");
+	        //navigator.notification.alert("PhoneGap is working", function(){}, "", "");
 	        var timeDelay = 1000 * 20;
 			setInterval ( showAlert, timeDelay );
 	    } 
@@ -30,13 +30,13 @@
 		
 		function showAlert()
 		{		
-			navigator.systemNotification.notification.alert
-			(
-			    'You are the winner!',  // message
-			    alertDismissed,         // callback
-			    'Game Over',            // title
-			    'Done'                  // buttonName
-			);
+			//navigator.systemNotification.notification.alert
+			//(
+			//    'You are the winner!',  // message
+			//    alertDismissed,         // callback
+			//    'Game Over',            // title
+			//    'Done'                  // buttonName
+			//);
 		}
 	</script>
 </head>
