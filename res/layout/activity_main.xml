@@ -19,12 +19,12 @@
 
     <Button
         android:id="@+id/notificationButton"
-        android:layout_width="wrap_content"
+        android:layout_width="fill_parent"
         android:layout_height="wrap_content"
-        android:layout_below="@+id/textView1"
-        android:layout_marginLeft="52dp"
-        android:layout_marginTop="26dp"
-        android:text="Button" />
+        android:layout_below="@+id/editTextLine"
+        android:layout_marginLeft="0dp"
+        android:layout_marginTop="0dp"
+        android:text="Login" />
     
     <ListView
         android:id="@+id/listview1"
@@ -33,5 +33,33 @@
         tools:listitem="@layout/listbutton"
         android:layout_below="@+id/notificationButton" >
     </ListView>
+
+    <LinearLayout 
+        android:layout_width="fill_parent"
+    	android:layout_height="wrap_content"
+    	android:orientation="horizontal"
+    	android:id="@+id/editTextLine"
+    	android:layout_below="@+id/textView1">
+
+	    <EditText
+	        android:id="@+id/editText1"
+	        android:layout_width="136dp"
+	        android:layout_height="wrap_content"
+	        android:layout_below="@+id/textView1"
+	        android:ems="10"
+	        android:hint="Username"
+	        android:inputType="textPersonName"/>
+	    <EditText
+	        android:id="@+id/editText2"
+	        android:layout_width="wrap_content"
+	        android:layout_height="wrap_content"
+	        android:layout_alignBaseline="@+id/editText1"
+	        android:layout_alignBottom="@+id/editText1"
+	        android:layout_alignParentRight="true"
+	        android:ems="10"
+	        android:hint="Password"
+	        android:inputType="textPassword"/>
+	</LinearLayout>
+
 
 </RelativeLayout>

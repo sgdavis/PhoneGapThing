@@ -13,6 +13,7 @@ import org.apache.cordova.api.LOG;
 import org.kohsuke.github.GHEvent;
 import org.kohsuke.github.GHEventInfo;
 import org.kohsuke.github.GHEventPayload;
+import org.kohsuke.github.GHMyself;
 import org.kohsuke.github.GHRepository;
 import org.kohsuke.github.GitHub;
 import org.kohsuke.github.PagedIterable;
@@ -32,6 +33,7 @@ import android.view.View;
 import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
 import android.widget.Button;
+import android.widget.EditText;
 import android.widget.ListView;
 import android.widget.TextView;
 import android.widget.Toast;
@@ -43,12 +45,15 @@ public class MainActivity extends DroidGap
 	private long lastChecked;
 	public TextView textview;
 	private Context myContext;
+	private Button notificationButton;
 	
 	private String repoName = "PhoneGapThing";
 	private String ownerName = "sgdavis";
 	
-	//private String repoName = "example-project";
-	//private String ownerName = "ajyong";
+	private String username = "";
+	private String password = "";
+	
+	private String stage = "login";
 	
 	@Override
 	public void onCreate(Bundle savedInstanceState) 
@@ -83,7 +88,7 @@ public class MainActivity extends DroidGap
 			}
 		}
 
-		Button notificationButton = (Button) findViewById(R.id.notificationButton);
+		notificationButton = (Button) findViewById(R.id.notificationButton);
 
 		notificationButton.setOnClickListener
 		(
@@ -92,6 +97,20 @@ public class MainActivity extends DroidGap
 				@Override
 				public void onClick(View v) 
 				{
+					if(stage == "login")
+				    {
+						stage = "repos";
+						EditText tempEdit = ( (EditText) findViewById(R.id.editText1) );
+						username = tempEdit.getText().toString();
+						tempEdit = ( (EditText) findViewById(R.id.editText2) );
+						password = tempEdit.getText().toString();
+				    }
+					else if(stage == "events")
+				    {
+						stage = "repos";
+				    }
+					
+					notificationButton.setText("WORKING");
 					startChecking();
 				}
 			}
@@ -105,19 +124,22 @@ public class MainActivity extends DroidGap
 		AsyncTaskRunner runner = new AsyncTaskRunner();
 	    runner.execute();
 	    
-		final Handler handler = new Handler();
-		handler.postDelayed
-		(
-				new Runnable() 
-				{
-					@Override
-					public void run() 
+	    if(stage == "events")
+	    {
+			final Handler handler = new Handler();
+			handler.postDelayed
+			(
+					new Runnable() 
 					{
-						Notify("Title: Meeting with Business","Msg:Pittsburg 10:00 AM EST ");
-						startChecking();
-					}
-				}, 100000
-		);
+						@Override
+						public void run() 
+						{
+							Notify("Title: Meeting with Business","Msg:Pittsburg 10:00 AM EST ");
+							startChecking();
+						}
+					}, 100000
+			);
+	    }
 	}
 	
 	@Override
@@ -177,26 +199,7 @@ public class MainActivity extends DroidGap
     		textview.setText( tempString );
     	}
     }
-    /*
-    COMMIT_COMMENT 
-    CREATE 
-    DELETE 
-    DOWNLOAD 
-    FOLLOW 
-    FORK 
-    FORK_APPLY 
-    GIST 
-    GOLLUM 
-    ISSUE_COMMENT 
-    ISSUES 
-    MEMBER 
-    PUBLIC 
-    PULL_REQUEST 
-    PULL_REQUEST_REVIEW_COMMENT 
-    PUSH 
-    TEAM_ADD 
-    WATCH 
-    */
+
     public String getEventOverview(GHEventInfo event)
     {
     	String ret = "";
@@ -313,54 +316,115 @@ public class MainActivity extends DroidGap
     class AsyncTaskRunner extends AsyncTask<String, String, String> 
     {
     	List<GHEventInfo> eventList;
+    	List<GHRepository> repositoryList;
+    	ArrayList<String> repositoryOwnerList = new ArrayList<String>();
   	  	private String resp;
 
   	  	@Override
   	  	protected String doInBackground(String... params) 
   	  	{
-  	  		try
-  			{
-	  	      	GitHub github = GitHub.connectUsingPassword("sgdavis", "Z4ngetsuSeth");
-	  	      	LOG.i("WAFFLE", "connected");
-	  	      	GHRepository repository = github.getRepository(ownerName + "/" + repoName);
-	  	      	LOG.i("WAFFLE", "repod");
-	  	      	eventList = repository.listEvents().asList();
-	  	      	LOG.i("WAFFLE", "evented");
-	  	      	
-	  	      	String tempString = "";
-	  	      	
-	  	      	if(textview != null)
-	  	      	{
-	  	      		for(int i = 0 ; i < eventList.size(); i++)
-	  	      		{
-	  	      			GHEventInfo tempEventInfo = eventList.get(i);
-	  	      			tempString = tempString + getEventOverview(tempEventInfo) + "\n";
-	  	      		}
-	  	      		
-	  	      		LOG.i("WAFFLE", tempString );
-	  	      	}
-	  	      	
-	  	      	displayText(tempString);
-  			}
-  			catch(IOException e)
-  			{
-  				LOG.i("WAFFLE", "FAILED");
-  			}
+  	  		if(stage == "repos")
+	  		{
+  	  			getListOfRepos();
+	  		}
+  	  		if(stage == "events")
+	  		{
+  	  			getListOfEvents();
+	  		}
+
   	  		return "";
   	  	}
+  	  
+  	  	public void getListOfEvents()
+	  	{
+	  		try
+			{
+		      	GitHub github = GitHub.connectUsingPassword(username, password);
+		      	LOG.i("WAFFLE", "connected");
+		      	GHRepository repository = github.getRepository(ownerName + "/" + repoName);
+		      	LOG.i("WAFFLE", "repod");
+		      	eventList = repository.listEvents().asList();
+		      	LOG.i("WAFFLE", "evented");
+		      	
+		      	String tempString = "";
+		      	
+		      	if(textview != null)
+		      	{
+		      		for(int i = 0 ; i < eventList.size(); i++)
+		      		{
+		      			GHEventInfo tempEventInfo = eventList.get(i);
+		      			tempString = tempString + getEventOverview(tempEventInfo) + "\n";
+		      		}
+		      		
+		      		LOG.i("WAFFLE", tempString );
+		      	}
+		      	
+		      	displayEvent();
+			}
+			catch(IOException e)
+			{
+				LOG.i("WAFFLE", "FAILED");
+			}
+	  	}
+  	  
+  	  	public void getListOfRepos()
+	  	{
+	  		try
+			{
+		      	GitHub github = GitHub.connectUsingPassword(username, password);
+		      	LOG.i("WAFFLE", "connected");
+		      	GHMyself myself = github.getMyself();
+		      	LOG.i("WAFFLE", "found myself");
+		      	repositoryList = myself.listAllRepositories().asList();
+		      	LOG.i("WAFFLE", "got repo list");
+		      	
+		      	String tempString = "";
+		      	
+		      	if(textview != null)
+		      	{
+		      		for(int i = 0 ; i < repositoryList.size(); i++)
+		      		{
+		      			GHRepository tempRepository = repositoryList.get(i);
+		      			tempString = tempString + tempRepository.getName() + "\n";
+		      			
+		      			try
+	  	  		    	{
+		      				repositoryOwnerList.add( i, tempRepository.getOwner().getLogin() );
+	  	  		    	}
+	  	  		    	catch (IOException e)
+	  	  		    	{
+	  	  		    		repositoryOwnerList.add("unknown");
+	  	  		    	}
+		      		}
+		      		
+		      		LOG.i("WAFFLE", tempString );
+		      	}
+		      	
+		      	displayRepo();
+			}
+			catch(IOException e)
+			{
+				LOG.i("WAFFLE", "FAILED");
+			}
+	  	}
   	  	
-  	  	public void displayText(final String strValue) 
-  	  	{         
-  	  		runOnUiThread
-  	  		(
-  	  			new Runnable() 
+  	  	public void displayEvent() 
+	  	{         
+	  	  	if(stage != "events")
+		    {
+	  	  		return;
+		    }
+	  		runOnUiThread
+	  		(
+	  			new Runnable() 
 	  	  		{
 	  	  			public void run() 
-	  	  			{
-	  	  				//textview.setText(strValue);  
+	  	  			{ 
+	  	  				notificationButton.setText("BACK");
 		  	  			final ListView listview = (ListView) findViewById(R.id.listview1);		
 			  	  	    final ArrayList<String> list = new ArrayList<String>();
-			  	  	    for (int i = 0; i < eventList.size(); ++i) {
+			  	  	    for (int i = 0; i < eventList.size(); ++i) 
+			  	  	    {
 			  	  	      list.add( getEventOverview(eventList.get(i)) );
 			  	  	    }
 			  	  	    final ArrayAdapter adapter = new ArrayAdapter(myContext, android.R.layout.simple_list_item_1, list);
@@ -380,8 +444,53 @@ public class MainActivity extends DroidGap
 			  	  	    );
 	  	  			}
 	  	  		}
-  	  		);
-  	  	}
+	  		);
+	  	}
+  	  
+  	  	public void displayRepo() 
+	  	{        
+	  	  	if(stage != "repos")
+		    {
+	  	  		return;
+		    }
+	  		runOnUiThread
+	  		(
+	  			new Runnable() 
+	  	  		{
+	  	  			public void run() 
+	  	  			{ 
+	  	  				notificationButton.setText("OK");
+		  	  			final ListView listview = (ListView) findViewById(R.id.listview1);		
+			  	  	    final ArrayList<String> list = new ArrayList<String>();
+			  	  	    
+				  	  	for(int i = 0 ; i < repositoryList.size(); i++)
+			      		{
+			      			GHRepository tempRepository = repositoryList.get(i);
+			      			list.add( tempRepository.getName() );
+			      		}
+			  	  	    final ArrayAdapter adapter = new ArrayAdapter(myContext, android.R.layout.simple_list_item_1, list);
+			  	  	    listview.setAdapter(adapter);
+		
+			  	  	    listview.setOnItemClickListener
+			  	  	    (
+			  	  	    	new AdapterView.OnItemClickListener() 
+			  	  		    {
+			  	  		      @Override
+			  	  		      public void onItemClick(AdapterView<?> parent, final View view, int position, long id) 
+			  	  		      {
+			  	  		    	  final String item = (String) parent.getItemAtPosition(position);
+			  	  		    	  repoName = item;
+			  	  		    	  ownerName = repositoryOwnerList.get(position);			  	  		    	  
+			  	  		    	  stage = "events";
+			  	  		    	  notificationButton.setText("WORKING");
+			  	  		    	  startChecking();
+			  	  		      }
+			  	  		    }
+			  	  	    );
+	  	  			}
+	  	  		}
+	  		);
+	  	}
 
   	  	@Override
   	  	protected void onPostExecute(String result) 
