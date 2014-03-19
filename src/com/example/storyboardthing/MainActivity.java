@@ -214,12 +214,12 @@ public class MainActivity extends DroidGap
 				ret = "Comments on issue *" + "" + "* by user *" + event.getActorLogin() + "* on " + event.getCreatedAt();
 				break;
     		case PULL_REQUEST:
-    			//pullRequest = event.getPayload(pullRequest.getClass());
+    			pullRequest = event.getPayload(pullRequest.getClass());
     			ret = "Data pulled by user *" + event.getActorLogin() + "* on " + event.getCreatedAt();
 				break;
     		case PUSH:
-    			//push = event.getPayload(push.getClass());
-    			ret = "Data pushed by user *" + event.getActorLogin() + "* on " + event.getCreatedAt();
+    			push = event.getPayload(push.getClass());
+    			ret = push.getSize() + " commits pushed by user *" + event.getActorLogin() + "* on " + event.getCreatedAt();
 				break;
     		case COMMIT_COMMENT:
     			ret = "Comments on commit *" + "" + "* by user *" + event.getActorLogin() + "* on " + event.getCreatedAt();
