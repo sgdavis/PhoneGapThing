@@ -27,6 +27,7 @@ import android.app.PendingIntent;
 import android.content.Context;
 import android.content.Intent;
 import android.os.AsyncTask;
+import android.os.Build;
 import android.os.Bundle;
 import android.os.Handler;
 import android.view.View;
@@ -54,6 +55,9 @@ public class MainActivity extends DroidGap
 	private String password = "";
 	
 	private String stage = "login";
+	
+	AsyncTaskRunner runner;
+	Handler handler;
 	
 	@Override
 	public void onCreate(Bundle savedInstanceState) 
@@ -92,10 +96,10 @@ public class MainActivity extends DroidGap
 			tempEdit = ( (EditText) findViewById(R.id.editText2) );
 			tempEdit.setText(password);
 			
-			android.os.Process.killProcess(getIntent().getIntExtra("OlderPID", -1));
+			android.os.Process.killProcess( getIntent().getIntExtra("OlderPID", -1) );
 			
-			continueToNextStage();
-			Toast.makeText(getBaseContext(), "BLARGH " + stage, Toast.LENGTH_LONG).show();
+			notificationButton.setText("WORKING");
+			startChecking();
 		}
 		else
 		{
@@ -120,9 +124,16 @@ public class MainActivity extends DroidGap
 		lastChecked = System.currentTimeMillis();	
 	}
 	
+	@Override
+	public void onDestroy()
+	{
+		runner.cancel(true);
+		handler.removeCallbacksAndMessages(null);
+	}
+	
 	public void continueToNextStage()
 	{
-		if(stage == "login")
+		if(stage.equalsIgnoreCase("login"))
 	    {
 			stage = "repos";
 			EditText tempEdit = ( (EditText) findViewById(R.id.editText1) );
@@ -130,26 +141,29 @@ public class MainActivity extends DroidGap
 			tempEdit = ( (EditText) findViewById(R.id.editText2) );
 			password = tempEdit.getText().toString();
 	    }
-		else if(stage == "events")
+		else if(stage.equalsIgnoreCase("events"))
 	    {
 			stage = "repos";
 	    }
 		
 		notificationButton.setText("WORKING");
 		startChecking();
-		Toast.makeText(getBaseContext(), "BLARGH V2 " + stage, Toast.LENGTH_LONG).show();
 	}
 	
 	public void startChecking()
 	{
-		AsyncTaskRunner runner = new AsyncTaskRunner();
-	    runner.execute();
+		runner = new AsyncTaskRunner();
 	    
-	    Toast.makeText(getBaseContext(), "BLARGH V3 " + stage, Toast.LENGTH_LONG).show();
+	    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.HONEYCOMB)
+	    	runner.executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR);
+	    else
+	    	runner.execute();
 	    
-	    if(stage == "events")
+	    Toast.makeText(getBaseContext(), "BLARGH " + stage, Toast.LENGTH_LONG).show();
+	    if(stage.equalsIgnoreCase("events"))
 	    {
-			final Handler handler = new Handler();
+	    	Toast.makeText(getBaseContext(), "BLARGH V3 " + stage, Toast.LENGTH_LONG).show();
+			handler = new Handler();
 			handler.postDelayed
 			(
 					new Runnable() 
@@ -351,11 +365,11 @@ public class MainActivity extends DroidGap
   	  	@Override
   	  	protected String doInBackground(String... params) 
   	  	{
-  	  		if(stage == "repos")
+  	  		if(stage.equalsIgnoreCase("repos"))
 	  		{
   	  			getListOfRepos();
 	  		}
-  	  		else if(stage == "events")
+  	  		else if(stage.equalsIgnoreCase("events"))
 	  		{
   	  			getListOfEvents();
 	  		}
@@ -438,7 +452,7 @@ public class MainActivity extends DroidGap
   	  	
   	  	public void displayEvent() 
 	  	{         
-	  	  	if(stage != "events")
+	  	  	if(stage.equalsIgnoreCase("events") == false)
 		    {
 	  	  		return;
 		    }
@@ -477,7 +491,7 @@ public class MainActivity extends DroidGap
   	  
   	  	public void displayRepo() 
 	  	{        
-	  	  	if(stage != "repos")
+	  	  	if(stage.equalsIgnoreCase("repos") == false)
 		    {
 	  	  		return;
 		    }
