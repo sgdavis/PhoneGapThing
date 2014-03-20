@@ -67,6 +67,7 @@ public class MainActivity extends DroidGap
 		
 		textview = (TextView) findViewById(R.id.textView1);
 		textview.setMovementMethod(new ScrollingMovementMethod());
+		notificationButton = (Button) findViewById(R.id.notificationButton);
 			
 		if(getIntent().getBooleanExtra("FromPrevious",false) == true)
 		{
@@ -79,6 +80,22 @@ public class MainActivity extends DroidGap
 			{
 				textview.setText("Last called at " + callString + "\nLast viewed at " + checkString);
 			}
+			
+			repoName = getIntent().getStringExtra("RepoName");
+			ownerName = getIntent().getStringExtra("OwnerName");
+			username = getIntent().getStringExtra("UserName");
+			password = getIntent().getStringExtra("PassWord");
+			stage = getIntent().getStringExtra("Stage");
+			
+			EditText tempEdit = ( (EditText) findViewById(R.id.editText1) );
+			tempEdit.setText(username);
+			tempEdit = ( (EditText) findViewById(R.id.editText2) );
+			tempEdit.setText(password);
+			
+			android.os.Process.killProcess(getIntent().getIntExtra("OlderPID", -1));
+			
+			continueToNextStage();
+			Toast.makeText(getBaseContext(), "BLARGH " + stage, Toast.LENGTH_LONG).show();
 		}
 		else
 		{
@@ -88,8 +105,6 @@ public class MainActivity extends DroidGap
 			}
 		}
 
-		notificationButton = (Button) findViewById(R.id.notificationButton);
-
 		notificationButton.setOnClickListener
 		(
 			new View.OnClickListener() 
@@ -97,21 +112,7 @@ public class MainActivity extends DroidGap
 				@Override
 				public void onClick(View v) 
 				{
-					if(stage == "login")
-				    {
-						stage = "repos";
-						EditText tempEdit = ( (EditText) findViewById(R.id.editText1) );
-						username = tempEdit.getText().toString();
-						tempEdit = ( (EditText) findViewById(R.id.editText2) );
-						password = tempEdit.getText().toString();
-				    }
-					else if(stage == "events")
-				    {
-						stage = "repos";
-				    }
-					
-					notificationButton.setText("WORKING");
-					startChecking();
+					continueToNextStage();
 				}
 			}
 		);
@@ -119,10 +120,32 @@ public class MainActivity extends DroidGap
 		lastChecked = System.currentTimeMillis();	
 	}
 	
+	public void continueToNextStage()
+	{
+		if(stage == "login")
+	    {
+			stage = "repos";
+			EditText tempEdit = ( (EditText) findViewById(R.id.editText1) );
+			username = tempEdit.getText().toString();
+			tempEdit = ( (EditText) findViewById(R.id.editText2) );
+			password = tempEdit.getText().toString();
+	    }
+		else if(stage == "events")
+	    {
+			stage = "repos";
+	    }
+		
+		notificationButton.setText("WORKING");
+		startChecking();
+		Toast.makeText(getBaseContext(), "BLARGH V2 " + stage, Toast.LENGTH_LONG).show();
+	}
+	
 	public void startChecking()
 	{
 		AsyncTaskRunner runner = new AsyncTaskRunner();
 	    runner.execute();
+	    
+	    Toast.makeText(getBaseContext(), "BLARGH V3 " + stage, Toast.LENGTH_LONG).show();
 	    
 	    if(stage == "events")
 	    {
@@ -137,7 +160,7 @@ public class MainActivity extends DroidGap
 							Notify("Title: Meeting with Business","Msg:Pittsburg 10:00 AM EST ");
 							startChecking();
 						}
-					}, 100000
+					}, 10000
 			);
 	    }
 	}
@@ -162,7 +185,12 @@ public class MainActivity extends DroidGap
 		notificationIntent.putExtra("FromPrevious", true);
 		notificationIntent.putExtra("LastCalled", System.currentTimeMillis());
 		notificationIntent.putExtra("LastChecked", lastChecked);
-		notificationIntent.putExtra("Waffle", "FUCK");
+		notificationIntent.putExtra("UserName", username);
+		notificationIntent.putExtra("PassWord", password);
+		notificationIntent.putExtra("Stage", stage);
+		notificationIntent.putExtra("RepoName", repoName);
+		notificationIntent.putExtra("OwnerName", ownerName);
+		notificationIntent.putExtra("OlderPID", android.os.Process.myPid());
 		PendingIntent pendingIntent = PendingIntent.getActivity(this, 0, notificationIntent, PendingIntent.FLAG_UPDATE_CURRENT);
 
 		notification.setLatestEventInfo(MainActivity.this, notificationTitle, notificationMessage, pendingIntent);
@@ -327,7 +355,7 @@ public class MainActivity extends DroidGap
 	  		{
   	  			getListOfRepos();
 	  		}
-  	  		if(stage == "events")
+  	  		else if(stage == "events")
 	  		{
   	  			getListOfEvents();
 	  		}
