@@ -56,6 +56,14 @@ public class MainActivity extends DroidGap
 	
 	private String stage = "login";
 	
+	private int minutes;
+	private int seconds;
+	private int delayTimer;
+	
+	List<GHEventInfo> eventList;
+	List<GHRepository> repositoryList;
+	ArrayList<String> repositoryOwnerList = new ArrayList<String>();
+	
 	AsyncTaskRunner runner;
 	Handler handler;
 	
@@ -90,6 +98,9 @@ public class MainActivity extends DroidGap
 			username = getIntent().getStringExtra("UserName");
 			password = getIntent().getStringExtra("PassWord");
 			stage = getIntent().getStringExtra("Stage");
+			minutes = getIntent().getIntExtra("Minutes",0);
+			seconds = getIntent().getIntExtra("Seconds",0);
+			delayTimer = getIntent().getIntExtra("DelayTimer", 10000);
 			
 			EditText tempEdit = ( (EditText) findViewById(R.id.editText1) );
 			tempEdit.setText(username);
@@ -138,9 +149,30 @@ public class MainActivity extends DroidGap
 			stage = "repos";
 			EditText tempEdit = ( (EditText) findViewById(R.id.editText1) );
 			username = tempEdit.getText().toString();
+			tempEdit.setText("");
+			tempEdit.setHint("Minutes");
 			tempEdit = ( (EditText) findViewById(R.id.editText2) );
 			password = tempEdit.getText().toString();
+			tempEdit.setText("");
+			tempEdit.setHint("Seconds");
 	    }
+		else if(stage.equalsIgnoreCase("repos"))
+		{
+			EditText tempEdit = ( (EditText) findViewById(R.id.editText1) );
+			minutes = Integer.parseInt(tempEdit.getText().toString());
+			tempEdit.setText("");
+			tempEdit.setHint("");
+			tempEdit = ( (EditText) findViewById(R.id.editText2) );
+			seconds = Integer.parseInt(tempEdit.getText().toString());
+			tempEdit.setText("");
+			tempEdit.setHint("");
+			
+			delayTimer = minutes * 60 * 1000 + seconds * 1000;
+			if(delayTimer < 10000)
+			{
+				delayTimer = 10000;
+			}
+		}
 		else if(stage.equalsIgnoreCase("events"))
 	    {
 			stage = "repos";
@@ -159,10 +191,8 @@ public class MainActivity extends DroidGap
 	    else
 	    	runner.execute();
 	    
-	    Toast.makeText(getBaseContext(), "BLARGH " + stage, Toast.LENGTH_LONG).show();
 	    if(stage.equalsIgnoreCase("events"))
 	    {
-	    	Toast.makeText(getBaseContext(), "BLARGH V3 " + stage, Toast.LENGTH_LONG).show();
 			handler = new Handler();
 			handler.postDelayed
 			(
@@ -171,10 +201,9 @@ public class MainActivity extends DroidGap
 						@Override
 						public void run() 
 						{
-							Notify("Title: Meeting with Business","Msg:Pittsburg 10:00 AM EST ");
 							startChecking();
 						}
-					}, 10000
+					}, delayTimer
 			);
 	    }
 	}
@@ -204,6 +233,9 @@ public class MainActivity extends DroidGap
 		notificationIntent.putExtra("Stage", stage);
 		notificationIntent.putExtra("RepoName", repoName);
 		notificationIntent.putExtra("OwnerName", ownerName);
+		notificationIntent.putExtra("Minutes", minutes);
+		notificationIntent.putExtra("Seconds", seconds);
+		notificationIntent.putExtra("DelayTimer", delayTimer);
 		notificationIntent.putExtra("OlderPID", android.os.Process.myPid());
 		PendingIntent pendingIntent = PendingIntent.getActivity(this, 0, notificationIntent, PendingIntent.FLAG_UPDATE_CURRENT);
 
@@ -357,9 +389,6 @@ public class MainActivity extends DroidGap
     
     class AsyncTaskRunner extends AsyncTask<String, String, String> 
     {
-    	List<GHEventInfo> eventList;
-    	List<GHRepository> repositoryList;
-    	ArrayList<String> repositoryOwnerList = new ArrayList<String>();
   	  	private String resp;
 
   	  	@Override
@@ -372,6 +401,11 @@ public class MainActivity extends DroidGap
   	  		else if(stage.equalsIgnoreCase("events"))
 	  		{
   	  			getListOfEvents();
+  	  			
+	  	  		if(eventList != null && eventList.size() > 0)
+				{
+					Notify("GitChecker",eventList.size() + " new events detected!");
+				}
 	  		}
 
   	  		return "";
@@ -379,6 +413,8 @@ public class MainActivity extends DroidGap
   	  
   	  	public void getListOfEvents()
 	  	{
+  	  		Date cutoffDate = new Date(System.currentTimeMillis() - delayTimer);
+  	  	
 	  		try
 			{
 		      	GitHub github = GitHub.connectUsingPassword(username, password);
@@ -396,6 +432,11 @@ public class MainActivity extends DroidGap
 		      		{
 		      			GHEventInfo tempEventInfo = eventList.get(i);
 		      			tempString = tempString + getEventOverview(tempEventInfo) + "\n";
+		      			
+		      			if(delayTimer > 60000 && tempEventInfo.getCreatedAt().before(cutoffDate))
+		      			{
+		      				eventList.remove(i--);
+		      			}
 		      		}
 		      		
 		      		LOG.i("WAFFLE", tempString );
@@ -525,6 +566,30 @@ public class MainActivity extends DroidGap
 			  	  		    	  ownerName = repositoryOwnerList.get(position);			  	  		    	  
 			  	  		    	  stage = "events";
 			  	  		    	  notificationButton.setText("WORKING");
+			  	  		    	  
+			  	  		    	  minutes = 0;
+			  	  		    	  seconds = 0;
+			  	  		    	  EditText tempEdit = ( (EditText) findViewById(R.id.editText1) );
+			  	  		    	  if(tempEdit.getText().length() != 0)
+			  	  		    	  {
+			  	  		    		  minutes = Integer.parseInt(tempEdit.getText().toString());
+			  	  		    	  }
+			  	  		    	  tempEdit.setText("");
+			  	  		    	  tempEdit.setHint("");
+			  	  		    	  tempEdit = ( (EditText) findViewById(R.id.editText2) );
+			  	  		    	  if(tempEdit.getText().length() != 0)
+			  	  		    	  {
+			  	  		    		  seconds = Integer.parseInt(tempEdit.getText().toString());
+			  	  		    	  }
+			  	  		    	  tempEdit.setText("");
+			  	  		    	  tempEdit.setHint("");
+					  	  			
+			  	  		    	  delayTimer = minutes * 60 * 1000 + seconds * 1000;
+			  	  		    	  if(delayTimer < 10000)
+			  	  		    	  {
+			  	  		    		  delayTimer = 10000;
+			  	  		    	  }
+					  	  			
 			  	  		    	  startChecking();
 			  	  		      }
 			  	  		    }
