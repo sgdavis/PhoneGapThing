@@ -60,6 +60,9 @@ public class MainActivity extends DroidGap
 	private int seconds;
 	private int delayTimer;
 	
+	private long lastCalledTime;
+	private long lastCheckedTime;
+	
 	List<GHEventInfo> eventList;
 	List<GHRepository> repositoryList;
 	ArrayList<String> repositoryOwnerList = new ArrayList<String>();
@@ -83,8 +86,8 @@ public class MainActivity extends DroidGap
 			
 		if(getIntent().getBooleanExtra("FromPrevious",false) == true)
 		{
-			long lastCalledTime = getIntent().getLongExtra("LastCalled", -1);
-			long lastCheckedTime = getIntent().getLongExtra("LastChecked", -1);
+			lastCalledTime = getIntent().getLongExtra("LastCalled", -1);
+			lastCheckedTime = getIntent().getLongExtra("LastChecked", -1);
 			SimpleDateFormat formatter = new SimpleDateFormat("EEEE, MMMM d, yyyy HH:mm");
 			String callString = formatter.format(new Date(lastCalledTime));
 			String checkString = formatter.format(new Date(lastCheckedTime));
@@ -103,9 +106,16 @@ public class MainActivity extends DroidGap
 			delayTimer = getIntent().getIntExtra("DelayTimer", 10000);
 			
 			EditText tempEdit = ( (EditText) findViewById(R.id.editText1) );
-			tempEdit.setText(username);
+			tempEdit.setText("");
+			tempEdit.setHint("");
 			tempEdit = ( (EditText) findViewById(R.id.editText2) );
-			tempEdit.setText(password);
+			tempEdit.setText("");
+			tempEdit.setHint("");
+			
+			if(stage.equalsIgnoreCase("events"))
+			{
+				stage = "eventsSpecial";
+			}
 			
 			android.os.Process.killProcess( getIntent().getIntExtra("OlderPID", -1) );
 			
@@ -173,7 +183,7 @@ public class MainActivity extends DroidGap
 				delayTimer = 10000;
 			}
 		}
-		else if(stage.equalsIgnoreCase("events"))
+		else if(stage.equalsIgnoreCase("events") || stage.equalsIgnoreCase("eventsSpecial"))
 	    {
 			stage = "repos";
 	    }
@@ -398,11 +408,14 @@ public class MainActivity extends DroidGap
 	  		{
   	  			getListOfRepos();
 	  		}
-  	  		else if(stage.equalsIgnoreCase("events"))
+  	  		else if(stage.equalsIgnoreCase("events") || stage.equalsIgnoreCase("eventsSpecial"))
 	  		{
   	  			getListOfEvents();
   	  			
-	  	  		if(eventList != null && eventList.size() > 0)
+	  	  		if(stage.equalsIgnoreCase("eventsSpecial") == false 
+	  	  				&& delayTimer > 60000 
+	  	  				&& eventList != null
+	  	  				&& eventList.size() > 0)
 				{
 					Notify("GitChecker",eventList.size() + " new events detected!");
 				}
@@ -413,7 +426,15 @@ public class MainActivity extends DroidGap
   	  
   	  	public void getListOfEvents()
 	  	{
-  	  		Date cutoffDate = new Date(System.currentTimeMillis() - delayTimer);
+  	  		Date cutoffDate;
+  	  		if(stage.equalsIgnoreCase("events"))
+  	  		{
+  	  			cutoffDate = new Date(System.currentTimeMillis() - delayTimer);
+  	  		}
+  	  		else //eventsSpecial
+  	  		{
+  	  			cutoffDate = new Date(lastCalledTime - delayTimer);
+  	  		}
   	  	
 	  		try
 			{
@@ -493,7 +514,7 @@ public class MainActivity extends DroidGap
   	  	
   	  	public void displayEvent() 
 	  	{         
-	  	  	if(stage.equalsIgnoreCase("events") == false)
+	  	  	if(stage.equalsIgnoreCase("events") == false && stage.equalsIgnoreCase("eventsSpecial") == false)
 		    {
 	  	  		return;
 		    }
