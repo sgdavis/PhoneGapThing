@@ -13,6 +13,9 @@ import org.apache.cordova.api.LOG;
 import org.kohsuke.github.GHEvent;
 import org.kohsuke.github.GHEventInfo;
 import org.kohsuke.github.GHEventPayload;
+import org.kohsuke.github.GHIssue;
+import org.kohsuke.github.GHIssueComment;
+import org.kohsuke.github.GHIssueState;
 import org.kohsuke.github.GHMyself;
 import org.kohsuke.github.GHRepository;
 import org.kohsuke.github.GitHub;
@@ -65,7 +68,12 @@ public class MainActivity extends DroidGap
 	
 	List<GHEventInfo> eventList;
 	List<GHRepository> repositoryList;
+	List<GHIssue> issueList;
+	List<GHIssueComment> commentList;
+	
 	ArrayList<String> repositoryOwnerList = new ArrayList<String>();
+	
+	ArrayList<String> stringList;
 	
 	AsyncTaskRunner runner;
 	Handler handler;
@@ -264,26 +272,6 @@ public class MainActivity extends DroidGap
 		}
 	}
 
-    public void testJavaAPI() throws IOException {
-    	GitHub github = GitHub.connect();
-    	GHRepository repository = github.getRepository("example-project");
-    	List<GHEventInfo> eventList = repository.listEvents().asList();
-    	
-    	TextView textview = (TextView) findViewById(R.id.textView1);
-    	String tempString = "";
-    	
-    	if(textview != null)
-    	{
-    		for(int i = 0 ; i < eventList.size(); i++)
-    		{
-    			GHEventInfo tempEventInfo = eventList.get(i);
-    			tempString = tempString + tempEventInfo.toString();
-    		}
-    		
-    		textview.setText( tempString );
-    	}
-    }
-
     public String getEventOverview(GHEventInfo event)
     {
     	String ret = "";
@@ -292,13 +280,40 @@ public class MainActivity extends DroidGap
     	GHEventPayload.PullRequest pullRequest = new GHEventPayload.PullRequest();
     	GHEventPayload.Push push = new GHEventPayload.Push();
     	String supportString = "";
+    	int i = 0;
+    	int j = 0;
     	try
     	{
     		switch(event.getType())
     		{
     		case ISSUE_COMMENT:
     			//issueComment = event.getPayload(issueComment.getClass());
-				ret = "Comments on issue *" + "" + "* by user *" + event.getActorLogin() + "* on " + event.getCreatedAt();
+    			supportString = "ERROR";
+    			if(issueList != null)
+    			{
+	    			for(i = 0; i < issueList.size(); i++)
+	    			{
+	    				if( issueList.get(i).getUpdatedAt().after(event.getCreatedAt()) || issueList.get(i).getUpdatedAt().equals(event.getCreatedAt()))
+	    				{
+	    					commentList = issueList.get(i).getComments();
+	    					
+	    					for(j = 0; j < commentList.size(); j++)
+	    					{
+	    						if( commentList.get(j).getCreatedAt().equals(event.getCreatedAt()) || commentList.get(j).getUpdatedAt().equals(event.getCreatedAt()) )
+	    						{
+	    							supportString = issueList.get(i).getTitle();
+	    							break;
+	    						}
+	    					}
+	    				}
+	    				
+	    				if(!supportString.equals("ERROR"))
+    					{
+    						break;
+    					}
+	    			}
+    			}
+				ret = "Comment on issue *" + supportString + "* by user *" + event.getActorLogin() + "* on " + event.getCreatedAt();
 				break;
     		case PULL_REQUEST:
     			pullRequest = event.getPayload(pullRequest.getClass());
@@ -445,14 +460,22 @@ public class MainActivity extends DroidGap
 		      	eventList = repository.listEvents().asList();
 		      	LOG.i("WAFFLE", "evented");
 		      	
+		      	//Can be pulled after the getPayload function is fixed for issue comments
+		      	issueList = repository.getIssues(GHIssueState.OPEN);
+		      	issueList.addAll( repository.getIssues(GHIssueState.CLOSED) );
+		      	LOG.i("WAFFLE", "ISSUE #" + issueList.size() );
+		      	
 		      	String tempString = "";
+		      	stringList = new ArrayList<String>();
 		      	
 		      	if(textview != null)
 		      	{
 		      		for(int i = 0 ; i < eventList.size(); i++)
 		      		{
 		      			GHEventInfo tempEventInfo = eventList.get(i);
-		      			tempString = tempString + getEventOverview(tempEventInfo) + "\n";
+		      			String temp = getEventOverview(tempEventInfo);
+		      			stringList.add(temp);
+		      			tempString = tempString + temp + "\n";
 		      			
 		      			if(delayTimer > 60000 && tempEventInfo.getCreatedAt().before(cutoffDate))
 		      			{
@@ -464,7 +487,7 @@ public class MainActivity extends DroidGap
 		      	}
 		      	
 		      	displayEvent();
-			}
+		      	}
 			catch(IOException e)
 			{
 				LOG.i("WAFFLE", "FAILED");
@@ -526,12 +549,7 @@ public class MainActivity extends DroidGap
 	  	  			{ 
 	  	  				notificationButton.setText("BACK");
 		  	  			final ListView listview = (ListView) findViewById(R.id.listview1);		
-			  	  	    final ArrayList<String> list = new ArrayList<String>();
-			  	  	    for (int i = 0; i < eventList.size(); ++i) 
-			  	  	    {
-			  	  	      list.add( getEventOverview(eventList.get(i)) );
-			  	  	    }
-			  	  	    final ArrayAdapter adapter = new ArrayAdapter(myContext, android.R.layout.simple_list_item_1, list);
+			  	  	    final ArrayAdapter adapter = new ArrayAdapter(myContext, android.R.layout.simple_list_item_1, stringList);
 			  	  	    listview.setAdapter(adapter);
 		
 			  	  	    listview.setOnItemClickListener
