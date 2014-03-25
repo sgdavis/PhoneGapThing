@@ -21,21 +21,27 @@ public final class R {
         public static final int activity_vertical_margin=0x7f050001;
     }
     public static final class drawable {
-        public static final int splash=0x7f020000;
+        public static final int popup_bg=0x7f020000;
+        public static final int splash=0x7f020001;
     }
     public static final class id {
-        public static final int action_settings=0x7f090007;
+        public static final int action_settings=0x7f09000b;
         public static final int atomPay_removePay=0x7f090006;
+        public static final int close=0x7f09000a;
         public static final int editText1=0x7f090004;
         public static final int editText2=0x7f090005;
         public static final int editTextLine=0x7f090002;
         public static final int listview1=0x7f090003;
         public static final int notificationButton=0x7f090001;
+        public static final int popupPanel=0x7f090007;
+        public static final int popuptext1=0x7f090008;
+        public static final int popuptext2=0x7f090009;
         public static final int textView1=0x7f090000;
     }
     public static final class layout {
         public static final int activity_main=0x7f030000;
         public static final int listbutton=0x7f030001;
+        public static final int popup=0x7f030002;
     }
     public static final class menu {
         public static final int main=0x7f080000;

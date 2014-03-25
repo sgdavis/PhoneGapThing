@@ -22,6 +22,9 @@ import org.kohsuke.github.GitHub;
 import org.kohsuke.github.PagedIterable;
 
 import android.text.method.ScrollingMovementMethod;
+import android.view.Display;
+import android.view.Gravity;
+import android.view.LayoutInflater;
 import android.view.Menu;
 import android.app.Activity;
 import android.app.Notification;
@@ -29,6 +32,8 @@ import android.app.NotificationManager;
 import android.app.PendingIntent;
 import android.content.Context;
 import android.content.Intent;
+import android.graphics.Point;
+import android.graphics.drawable.BitmapDrawable;
 import android.os.AsyncTask;
 import android.os.Build;
 import android.os.Bundle;
@@ -38,7 +43,9 @@ import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
 import android.widget.Button;
 import android.widget.EditText;
+import android.widget.LinearLayout;
 import android.widget.ListView;
+import android.widget.PopupWindow;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -66,21 +73,27 @@ public class MainActivity extends DroidGap
 	private long lastCalledTime;
 	private long lastCheckedTime;
 	
-	List<GHEventInfo> eventList;
-	List<GHRepository> repositoryList;
-	List<GHIssue> issueList;
-	List<GHIssueComment> commentList;
+	private List<GHEventInfo> eventList;
+	private List<GHRepository> repositoryList;
+	private List<GHIssue> issueList;
+	private List<GHIssueComment> commentList;
 	
-	ArrayList<String> repositoryOwnerList = new ArrayList<String>();
+	private PopupWindow popupWindow;
 	
-	ArrayList<String> stringList;
+	private ArrayList<String> repositoryOwnerList = new ArrayList<String>();
 	
-	AsyncTaskRunner runner;
-	Handler handler;
+	private ArrayList<String> stringList;
+	
+	private AsyncTaskRunner runner;
+	private Handler handler;
+	
+	private boolean notWorking;
+	private int MaxEventListSize = 30;
 	
 	@Override
 	public void onCreate(Bundle savedInstanceState) 
 	{
+		notWorking = true;
 		myContext = this;
 		super.onCreate(savedInstanceState);	
 		super.init();
@@ -186,9 +199,9 @@ public class MainActivity extends DroidGap
 			tempEdit.setHint("");
 			
 			delayTimer = minutes * 60 * 1000 + seconds * 1000;
-			if(delayTimer < 10000)
+			if(delayTimer < 30000)
 			{
-				delayTimer = 10000;
+				delayTimer = 30000;
 			}
 		}
 		else if(stage.equalsIgnoreCase("events") || stage.equalsIgnoreCase("eventsSpecial"))
@@ -202,12 +215,20 @@ public class MainActivity extends DroidGap
 	
 	public void startChecking()
 	{
-		runner = new AsyncTaskRunner();
-	    
-	    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.HONEYCOMB)
-	    	runner.executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR);
-	    else
-	    	runner.execute();
+		if(notWorking == true)
+		{
+			notWorking = false;
+			runner = new AsyncTaskRunner();
+		    
+		    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.HONEYCOMB)
+		    	runner.executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR);
+		    else
+		    	runner.execute();
+		}
+		else
+		{
+			LOG.i("WAFFLE", "tried to fire new thread");
+		}
 	    
 	    if(stage.equalsIgnoreCase("events"))
 	    {
@@ -409,6 +430,8 @@ public class MainActivity extends DroidGap
 				LOG.i("WAFFLE", "cannot summarize");
     	}
     	
+    	LOG.i("WAFFLE", "made summary");
+    	
     	return ret;
     }
     
@@ -435,7 +458,8 @@ public class MainActivity extends DroidGap
 					Notify("GitChecker",eventList.size() + " new events detected!");
 				}
 	  		}
-
+  	  		
+  	  		notWorking = true;
   	  		return "";
   	  	}
   	  
@@ -466,11 +490,21 @@ public class MainActivity extends DroidGap
 		      	LOG.i("WAFFLE", "ISSUE #" + issueList.size() );
 		      	
 		      	String tempString = "";
+		      	if(stringList != null)
+		      	{
+		      		stringList.clear();
+		      	}
 		      	stringList = new ArrayList<String>();
+		      	
+		      	int listSize = eventList.size();
+		      	if(listSize > MaxEventListSize)
+		      	{
+		      		listSize = MaxEventListSize;
+		      	}
 		      	
 		      	if(textview != null)
 		      	{
-		      		for(int i = 0 ; i < eventList.size(); i++)
+		      		for(int i = 0 ; i < listSize; i++)
 		      		{
 		      			GHEventInfo tempEventInfo = eventList.get(i);
 		      			String temp = getEventOverview(tempEventInfo);
@@ -561,6 +595,7 @@ public class MainActivity extends DroidGap
 			  	  		      {
 			  	  		    	  final String item = (String) parent.getItemAtPosition(position);
 			  	  		    	  Toast.makeText(getBaseContext(), item, Toast.LENGTH_LONG).show();
+			  	  		    	  showEventPopup();
 			  	  		      }
 			  	  		    }
 			  	  	    );
@@ -660,5 +695,55 @@ public class MainActivity extends DroidGap
   	  		// Things to be done while execution of long running operation is in
   	  		// progress. For example updating ProgessDialog
   	  	}
+  	}
+    
+    // The method that displays the popup.
+  	private void showEventPopup()//(GHEventInfo eventInfo) 
+  	{
+  		LOG.i("WAFFLE","calling popup");
+  		int popupWidth = 300;
+  		int popupHeight = 300;
+  		
+  		Display display = getWindowManager().getDefaultDisplay();
+  		Point size = new Point();
+  		display.getSize(size);
+  		int width = size.x;
+  		int height = size.y;
+   
+  		//setContentView(R.layout.popup);
+  	
+  		// Inflate the popup_layout.xml
+  		LinearLayout viewGroup = (LinearLayout) findViewById(R.id.popupPanel);
+  		LayoutInflater layoutInflater = (LayoutInflater) myContext.getSystemService(Context.LAYOUT_INFLATER_SERVICE);
+  		View layout = layoutInflater.inflate(R.layout.popup, viewGroup, false);
+   
+  		// Creating the PopupWindow
+  		popupWindow = new PopupWindow(myContext);
+  		popupWindow.setContentView(layout);
+  		popupWindow.setWidth(popupWidth);
+		popupWindow.setHeight(popupHeight);
+		popupWindow.setFocusable(true);
+   
+  		// Clear the default translucent background
+  		popupWindow.setBackgroundDrawable(new BitmapDrawable());
+   
+  		// Displaying the popup at the specified location, + offsets.
+  		popupWindow.showAtLocation(layout, Gravity.NO_GRAVITY, (width - popupWidth)/2, (height - popupHeight)/2);
+   
+  		// Getting a reference to Close button, and close the popup when clicked.
+  		Button close = (Button) layout.findViewById(R.id.close);
+  		close.setOnClickListener
+  		(
+  			new View.OnClickListener() 
+  			{
+  				@Override
+  				public void onClick(View v) 
+  				{
+  					popupWindow.dismiss();
+  				}
+  			}
+  		);
+  		
+  		//setContentView(R.layout.activity_main);
   	}
 }
