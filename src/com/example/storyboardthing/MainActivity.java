@@ -1,6 +1,11 @@
 package com.example.storyboardthing;
 
+import java.io.BufferedReader;
 import java.io.IOException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
+import java.net.HttpURLConnection;
+import java.net.URL;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Date;
@@ -10,6 +15,14 @@ import java.util.Map;
 
 import org.apache.cordova.DroidGap;
 import org.apache.cordova.api.LOG;
+import org.apache.http.HttpResponse;
+import org.apache.http.client.ClientProtocolException;
+import org.apache.http.client.HttpClient;
+import org.apache.http.client.methods.HttpGet;
+import org.apache.http.impl.client.DefaultHttpClient;
+import org.json.JSONArray;
+import org.json.JSONException;
+import org.json.JSONObject;
 import org.kohsuke.github.GHEvent;
 import org.kohsuke.github.GHEventInfo;
 import org.kohsuke.github.GHEventPayload;
@@ -51,6 +64,8 @@ import android.widget.Toast;
 
 import com.example.storyboardthing.R;
 
+//"https://api.github.com/repos/sgdavis/PhoneGapThing/events"
+
 public class MainActivity extends DroidGap 
 {
 	private long lastChecked;
@@ -69,14 +84,15 @@ public class MainActivity extends DroidGap
 	private int minutes;
 	private int seconds;
 	private int delayTimer;
+	private int minimumDelay = 60000;
 	
 	private long lastCalledTime;
 	private long lastCheckedTime;
 	
-	private List<GHEventInfo> eventList;
 	private List<GHRepository> repositoryList;
 	private List<GHIssue> issueList;
 	private List<GHIssueComment> commentList;
+	private List<JSONObject> jsonEventList;
 	
 	private PopupWindow popupWindow;
 	
@@ -124,7 +140,7 @@ public class MainActivity extends DroidGap
 			stage = getIntent().getStringExtra("Stage");
 			minutes = getIntent().getIntExtra("Minutes",0);
 			seconds = getIntent().getIntExtra("Seconds",0);
-			delayTimer = getIntent().getIntExtra("DelayTimer", 10000);
+			delayTimer = getIntent().getIntExtra("DelayTimer", minimumDelay);
 			
 			EditText tempEdit = ( (EditText) findViewById(R.id.editText1) );
 			tempEdit.setText("");
@@ -199,9 +215,9 @@ public class MainActivity extends DroidGap
 			tempEdit.setHint("");
 			
 			delayTimer = minutes * 60 * 1000 + seconds * 1000;
-			if(delayTimer < 30000)
+			if(delayTimer < minimumDelay)
 			{
-				delayTimer = 30000;
+				delayTimer = minimumDelay;
 			}
 		}
 		else if(stage.equalsIgnoreCase("events") || stage.equalsIgnoreCase("eventsSpecial"))
@@ -217,6 +233,7 @@ public class MainActivity extends DroidGap
 	{
 		if(notWorking == true)
 		{
+			LOG.i("WAFFLE", "firing new thread" + delayTimer);
 			notWorking = false;
 			runner = new AsyncTaskRunner();
 		    
@@ -293,7 +310,7 @@ public class MainActivity extends DroidGap
 		}
 	}
 
-    public String getEventOverview(GHEventInfo event)
+    public String getEventOverview(JSONObject event)
     {
     	String ret = "";
     	GHEventPayload temp;
@@ -303,134 +320,130 @@ public class MainActivity extends DroidGap
     	String supportString = "";
     	int i = 0;
     	int j = 0;
+    	
     	try
     	{
-    		switch(event.getType())
+    		String eventType = event.getString("type");
+    		
+    		JSONObject payload = new JSONObject( event.getString("payload") );
+    		JSONObject actor = new JSONObject( event.getString("actor") );
+    		
+    		if(eventType.equals("CommitCommentEvent"))
     		{
-    		case ISSUE_COMMENT:
-    			//issueComment = event.getPayload(issueComment.getClass());
-    			supportString = "ERROR";
-    			if(issueList != null)
-    			{
-	    			for(i = 0; i < issueList.size(); i++)
-	    			{
-	    				if( issueList.get(i).getUpdatedAt().after(event.getCreatedAt()) || issueList.get(i).getUpdatedAt().equals(event.getCreatedAt()))
-	    				{
-	    					commentList = issueList.get(i).getComments();
-	    					
-	    					for(j = 0; j < commentList.size(); j++)
-	    					{
-	    						if( commentList.get(j).getCreatedAt().equals(event.getCreatedAt()) || commentList.get(j).getUpdatedAt().equals(event.getCreatedAt()) )
-	    						{
-	    							supportString = issueList.get(i).getTitle();
-	    							break;
-	    						}
-	    					}
-	    				}
-	    				
-	    				if(!supportString.equals("ERROR"))
-    					{
-    						break;
-    					}
-	    			}
-    			}
-				ret = "Comment on issue *" + supportString + "* by user *" + event.getActorLogin() + "* on " + event.getCreatedAt();
-				break;
-    		case PULL_REQUEST:
-    			pullRequest = event.getPayload(pullRequest.getClass());
-    			ret = "Data pulled by user *" + event.getActorLogin() + "* on " + event.getCreatedAt();
-				break;
-    		case PUSH:
-    			push = event.getPayload(push.getClass());
-    			ret = push.getSize() + " commits pushed by user *" + event.getActorLogin() + "* on " + event.getCreatedAt();
-				break;
-    		case COMMIT_COMMENT:
-    			ret = "Comments on commit *" + "" + "* by user *" + event.getActorLogin() + "* on " + event.getCreatedAt();
-				break;
-    		case CREATE:
-    			//payload ref_type Can be one of “repository”, “branch”, or “tag”
-    			if(false)
-    			{
-    				supportString = "Branch *" + "" + "*";
-    			}
-    			if(false)
-    			{
-    				supportString = "Tag *" + "" + "*";
-    			}
-    			else
-    			{
-    				supportString = "Repository";
-    			}
-    			ret = supportString + " created by user *" + event.getActorLogin() + "* on " + event.getCreatedAt();
-				break;
-    		case DELETE:
-    			if(false)
-    			{
-    				supportString = "Branch *" + "" + "*";
-    			}
-    			if(false)
-    			{
-    				supportString = "Tag *" + "" + "*";
-    			}
-    			else
-    			{
-    				supportString = "Repository";
-    			}
-    			//payload ref_type Can be one of “branch”, or “tag”
-    			ret = supportString + " destroyed by user *" + event.getActorLogin() + "* on " + event.getCreatedAt();
-				break;
-    		case DOWNLOAD:
-    			//deprecated by github
-    			ret = "Repository downloaded by user *" + event.getActorLogin() + "* on " + event.getCreatedAt();
-				break;
-    		case FOLLOW:
-    			//only user to user
-    			ret = "User followed by user *" + event.getActorLogin() + "* on " + event.getCreatedAt();
-				break;
-    		case FORK:
-    			ret = "Repository forked by user *" + event.getActorLogin() + "* on " + event.getCreatedAt();
-				break;
-    		case FORK_APPLY:
-    			//deprecated by github
-    			ret = "Fork application by user *" + event.getActorLogin() + "* on " + event.getCreatedAt();
-				break;
-    		case GIST:
-    			//deprecated by github
-    			ret = "GIST created by user *" + event.getActorLogin() + "* on " + event.getCreatedAt();
-				break;
-    		case GOLLUM:
-    			ret = "Wiki page *" + "" + "* updated by user *" + event.getActorLogin() + "* on " + event.getCreatedAt();
-				break;
-    		case ISSUES:
-    			//payload action Can be one of “opened”, “closed”, or “reopened”.
-    			ret = "Issue *" + "" + "* created by user *" + event.getActorLogin() + "* on " + event.getCreatedAt();
-				break;
-    		case MEMBER:
-    			ret = "Collaborator *" + "" + "* added by *" + event.getActorLogin() + "* on " + event.getCreatedAt();
-				break;
-    		case PUBLIC:
-    			ret = "Repository made public by *" + event.getActorLogin() + "* on " + event.getCreatedAt();
-				break;
-    		case PULL_REQUEST_REVIEW_COMMENT:
-    			ret = "Repository publicity changed by *" + event.getActorLogin() + "* on " + event.getCreatedAt();
-				break;
-    		case TEAM_ADD:
-    			//user or repo added to a team
-				break;
-    		case WATCH:
-    			ret = "Repository starred by *" + event.getActorLogin() + "* on " + event.getCreatedAt();
-				break;
-			default:
-				ret = "Unhandled Event";
-				break;
+    			ret = "Comment committed by " + actor.getString("login") + " at " + event.getString("created_at");
     		}
+    		else if(eventType.equals("CreateEvent"))
+    		{
+    			String refType = payload.getString("ref_type");
+    			String capitol   = Character.toString(refType.charAt(0)).toUpperCase();
+    			refType = capitol + refType.substring(1,refType.length());
+    			ret = refType + " created by " + actor.getString("login") + " at " + event.getString("created_at");
+    		}
+    		else if(eventType.equals("DeleteEvent"))
+    		{
+    			String refType = payload.getString("ref_type");
+    			String capitol   = Character.toString(refType.charAt(0)).toUpperCase();
+    			refType = capitol + refType.substring(1,refType.length());
+    			ret = refType + " deleted by " + actor.getString("login") + " at " + event.getString("created_at");
+    		}
+    	    else if(eventType.equals("DeploymentEvent"))
+    		{
+    	    	ret = "Deployed to repo " + payload.getString("name") + " at " + event.getString("created_at");
+    		}
+    	    else if(eventType.equals("DeploymentStatusEvent"))
+    		{
+    	    	ret = "Deployed to repo " + payload.getString("name") + " became " + payload.getString("state") + " at " + event.getString("created_at");
+    		}
+    	    else if(eventType.equals("DownloadEvent"))
+    		{
+    	    	//no longer created
+    	    	ret = "DownloadEvent";
+    		}
+    	    else if(eventType.equals("FollowEvent"))
+    		{
+    	    	//only user to user
+    	    	ret = "FollowEvent";
+    		}
+    	    else if(eventType.equals("ForkEvent"))
+    		{
+    	    	ret = "Repository forked by " + payload.getString("name") + " at " + event.getString("created_at");
+    		}
+    	    else if(eventType.equals("ForkApplyEvent"))
+    		{
+    	    	//no longer created
+    	    	ret = "ForkApplyEvent";
+    		}
+    	    else if(eventType.equals("GistEvent"))
+    		{
+    	    	//no longer created
+    	    	ret = "GistEvent";
+    		}
+    	    else if(eventType.equals("GollumEvent"))
+    		{
+    	    	ret = "Wiki page updated by " + payload.getString("name") + " at " + event.getString("created_at");
+    		}
+    	    else if(eventType.equals("IssueCommentEvent"))
+    		{
+    	    	JSONObject issue = new JSONObject(payload.getString("issue"));
+    	    	ret = "Issue " + issue.getString("title") + " commented on by " + actor.getString("login") + " at " + event.getString("created_at");
+    		}
+    	    else if(eventType.equals("IssuesEvent"))
+    		{
+    	    	JSONObject issue = new JSONObject(payload.getString("issue"));
+    	    	ret = "Issue " + issue.getString("title") + " " + payload.getString("action") + " by " + actor.getString("login") + " at " + event.getString("created_at");
+    		}
+    	    else if(eventType.equals("MemberEvent"))
+    		{
+    	    	JSONObject member = new JSONObject(payload.getString("member"));
+    	    	ret = "Member " + member.getString("login") + " " + payload.getString("action") + " by " + actor.getString("login") + " at " + event.getString("created_at");
+    		}
+    	    else if(eventType.equals("PageBuildEvent"))
+    		{
+    	    	ret = "Page build by " + actor.getString("login") + " at " + event.getString("created_at");
+    		}
+    	    else if(eventType.equals("PublicEvent"))
+    		{
+    	    	ret = "Repository made public by " + actor.getString("login") + " at " + event.getString("created_at");
+    		}
+    	    else if(eventType.equals("PullRequestEvent"))
+    		{
+    	    	ret = "Pull request " + payload.getInt("number") + " " + payload.getString("action") + " by " + actor.getString("login") + " at " + event.getString("created_at");
+    		}
+    	    else if(eventType.equals("PullRequestReviewCommentEvent"))
+    		{
+    	    	ret = "Pull request commented on by " + actor.getString("login") + " at " + event.getString("created_at");
+    		}
+    	    else if(eventType.equals("PushEvent"))
+    		{
+    	    	ret = payload.getInt("size") + " commit(s) pushed by " + actor.getString("login") + " at " + event.getString("created_at");
+    		}
+    	    else if(eventType.equals("ReleaseEvent"))
+    		{
+    	    	ret = "Release published by " + actor.getString("login") + " at " + event.getString("created_at");
+    		}
+    	    else if(eventType.equals("StatusEvent"))
+    		{
+    	    	ret = "Status changed to " + payload.getString("state") + " by " + actor.getString("login") + " at " + event.getString("created_at");
+    		}
+    	    else if(eventType.equals("TeamAddEvent"))
+    		{
+    	    	//user only
+    	    	ret = "TeamAddEvent";
+    		}
+    	    else if(eventType.equals("WatchEvent"))
+    		{
+    	    	//user only
+    			ret = "WatchEvent";
+    		}
+    	    else
+    	    {
+    	    	ret = "Unhandled Event";
+    	    }
     	}
-    	catch (IOException e)
+    	catch (JSONException e)
     	{
-				LOG.i("WAFFLE", "cannot summarize");
+			LOG.i("WAFFLE", "cannot summarize " + e.getMessage());
     	}
-    	
-    	LOG.i("WAFFLE", "made summary");
     	
     	return ret;
     }
@@ -451,11 +464,11 @@ public class MainActivity extends DroidGap
   	  			getListOfEvents();
   	  			
 	  	  		if(stage.equalsIgnoreCase("eventsSpecial") == false 
-	  	  				&& delayTimer > 60000 
-	  	  				&& eventList != null
-	  	  				&& eventList.size() > 0)
+	  	  				&& delayTimer > minimumDelay 
+	  	  				&& jsonEventList != null
+	  	  				&& jsonEventList.size() > 0)
 				{
-					Notify("GitChecker",eventList.size() + " new events detected!");
+					Notify("GitChecker",jsonEventList.size() + " new events detected!");
 				}
 	  		}
   	  		
@@ -465,67 +478,8 @@ public class MainActivity extends DroidGap
   	  
   	  	public void getListOfEvents()
 	  	{
-  	  		Date cutoffDate;
-  	  		if(stage.equalsIgnoreCase("events"))
-  	  		{
-  	  			cutoffDate = new Date(System.currentTimeMillis() - delayTimer);
-  	  		}
-  	  		else //eventsSpecial
-  	  		{
-  	  			cutoffDate = new Date(lastCalledTime - delayTimer);
-  	  		}
-  	  	
-	  		try
-			{
-		      	GitHub github = GitHub.connectUsingPassword(username, password);
-		      	LOG.i("WAFFLE", "connected");
-		      	GHRepository repository = github.getRepository(ownerName + "/" + repoName);
-		      	LOG.i("WAFFLE", "repod");
-		      	eventList = repository.listEvents().asList();
-		      	LOG.i("WAFFLE", "evented");
-		      	
-		      	//Can be pulled after the getPayload function is fixed for issue comments
-		      	issueList = repository.getIssues(GHIssueState.OPEN);
-		      	issueList.addAll( repository.getIssues(GHIssueState.CLOSED) );
-		      	LOG.i("WAFFLE", "ISSUE #" + issueList.size() );
-		      	
-		      	String tempString = "";
-		      	if(stringList != null)
-		      	{
-		      		stringList.clear();
-		      	}
-		      	stringList = new ArrayList<String>();
-		      	
-		      	int listSize = eventList.size();
-		      	if(listSize > MaxEventListSize)
-		      	{
-		      		listSize = MaxEventListSize;
-		      	}
-		      	
-		      	if(textview != null)
-		      	{
-		      		for(int i = 0 ; i < listSize; i++)
-		      		{
-		      			GHEventInfo tempEventInfo = eventList.get(i);
-		      			String temp = getEventOverview(tempEventInfo);
-		      			stringList.add(temp);
-		      			tempString = tempString + temp + "\n";
-		      			
-		      			if(delayTimer > 60000 && tempEventInfo.getCreatedAt().before(cutoffDate))
-		      			{
-		      				eventList.remove(i--);
-		      			}
-		      		}
-		      		
-		      		LOG.i("WAFFLE", tempString );
-		      	}
-		      	
-		      	displayEvent();
-		      	}
-			catch(IOException e)
-			{
-				LOG.i("WAFFLE", "FAILED");
-			}
+  	  		getJSONEvents();
+  	  		displayEvent();
 	  	}
   	  
   	  	public void getListOfRepos()
@@ -659,9 +613,9 @@ public class MainActivity extends DroidGap
 			  	  		    	  tempEdit.setHint("");
 					  	  			
 			  	  		    	  delayTimer = minutes * 60 * 1000 + seconds * 1000;
-			  	  		    	  if(delayTimer < 10000)
+			  	  		    	  if(delayTimer < minimumDelay)
 			  	  		    	  {
-			  	  		    		  delayTimer = 10000;
+			  	  		    		  delayTimer = minimumDelay;
 			  	  		    	  }
 					  	  			
 			  	  		    	  startChecking();
@@ -696,6 +650,89 @@ public class MainActivity extends DroidGap
   	  		// progress. For example updating ProgessDialog
   	  	}
   	}
+    
+    public String getJSONEvents()
+    {
+    	Date cutoffDate;
+  		if(stage.equalsIgnoreCase("events"))
+  		{
+  			cutoffDate = new Date(System.currentTimeMillis() - delayTimer);
+  		}
+  		else //eventsSpecial
+  		{
+  			cutoffDate = new Date(lastCalledTime - delayTimer);
+  		}
+  		
+    	try 
+    	{
+    		DefaultHttpClient httpClient = new DefaultHttpClient();
+    		HttpGet getRequest = new HttpGet("https://api.github.com/repos/" + ownerName + "/" + repoName + "/events");
+    		getRequest.addHeader("accept", "application/json");
+     
+    		HttpResponse response = httpClient.execute(getRequest);
+     
+    		if (response.getStatusLine().getStatusCode() != 200) 
+    		{
+    			throw new RuntimeException("Failed : HTTP error code : "  + response.getStatusLine().getStatusCode());
+    		}
+     
+    		BufferedReader br = new BufferedReader(new InputStreamReader((response.getEntity().getContent())));
+     
+    		String output;
+    		System.out.println("Output from Server .... \n");
+    		
+    		JSONArray mJsonArray;
+			try 
+			{
+				mJsonArray = new JSONArray(br.readLine());
+				JSONObject mJsonObject = new JSONObject();
+				int listSize = mJsonArray.length();
+				if(listSize > MaxEventListSize)
+				{
+					listSize = MaxEventListSize;
+				}
+				
+		      	if(stringList != null)
+		      	{
+		      		stringList.clear();
+		      	}
+		      	stringList = new ArrayList<String>();
+		      	
+		      	if(jsonEventList != null)
+		      	{
+		      		jsonEventList.clear();
+		      	}
+		      	jsonEventList = new ArrayList<JSONObject>();
+		      	
+	    		for (int i = 0; i < listSize; i++) 
+	    		{
+	    			JSONObject tempEventInfo = mJsonArray.getJSONObject(i);
+	      			String temp = getEventOverview( tempEventInfo );
+	      			stringList.add(temp);
+	    			jsonEventList.add( tempEventInfo );
+	    		}
+			} 
+			catch (JSONException e) 
+			{
+				e.printStackTrace();
+			}
+     
+    		httpClient.getConnectionManager().shutdown();
+    		return "";
+     
+    	} 
+    	catch (ClientProtocolException e) 
+    	{
+    		e.printStackTrace();
+     
+    	} 
+    	catch (IOException e) 
+    	{
+    		e.printStackTrace();
+    	}
+        LOG.i("MEGAWAFFLE","FAILED");
+        return "";
+    }
     
     // The method that displays the popup.
   	private void showEventPopup()//(GHEventInfo eventInfo) 
