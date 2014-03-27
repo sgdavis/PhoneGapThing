@@ -64,7 +64,7 @@ import android.widget.Toast;
 
 import com.example.storyboardthing.R;
 
-//"https://api.github.com/repos/sgdavis/PhoneGapThing/events"
+// https://api.github.com/repos/sgdavis/PhoneGapThing/events
 
 public class MainActivity extends DroidGap 
 {
@@ -520,6 +520,28 @@ public class MainActivity extends DroidGap
 			catch(IOException e)
 			{
 				LOG.i("WAFFLE", "FAILED");
+				
+				runOnUiThread
+		  		(
+		  			new Runnable() 
+		  	  		{
+		  	  			public void run() 
+		  	  			{ 
+		  	  				stage = "login";
+			  				EditText tempEdit = ( (EditText) findViewById(R.id.editText1) );
+			  				username = tempEdit.getText().toString();
+			  				tempEdit.setText("");
+			  				tempEdit.setHint("Username");
+			  				tempEdit = ( (EditText) findViewById(R.id.editText2) );
+			  				password = tempEdit.getText().toString();
+			  				tempEdit.setText("");
+			  				tempEdit.setHint("Password");
+			  				notificationButton.setText("LOGIN");
+			  				final String item = "Login failed, please try again.";
+		  	  		    	Toast.makeText(getBaseContext(), item, Toast.LENGTH_LONG).show();
+		  	  			}
+		  	  		}
+		  		);
 			}
 	  	}
   	  	
