@@ -47,6 +47,7 @@ import android.content.Context;
 import android.content.Intent;
 import android.graphics.Point;
 import android.graphics.drawable.BitmapDrawable;
+import android.net.Uri;
 import android.os.AsyncTask;
 import android.os.Build;
 import android.os.Bundle;
@@ -99,6 +100,8 @@ public class MainActivity extends DroidGap
 	private ArrayList<String> repositoryOwnerList = new ArrayList<String>();
 	
 	private ArrayList<String> stringList;
+	private ArrayList<String> longStringList;
+	private ArrayList<String> linkStringList;
 	
 	private AsyncTaskRunner runner;
 	private Handler handler;
@@ -309,17 +312,167 @@ public class MainActivity extends DroidGap
 			super.appView.resumeTimers();
 		}
 	}
+	
+	public String getEventLongDescription(JSONObject event)
+	{
+		String ret = "";
+		return ret;
+	}
+	
+	public String getEventPageLink(JSONObject event)
+	{
+		String ret = "";
+    	String supportString = "";
+    	String toReplace = "https://api.github.com/repos/";
+    	String replaceWith = "https://github.com/";
+    	
+    	try
+    	{
+    		String eventType = event.getString("type");
+    		
+    		JSONObject payload = new JSONObject( event.getString("payload") );
+    		JSONObject actor = new JSONObject( event.getString("actor") );
+    		
+    		if(eventType.equals("CommitCommentEvent"))
+    		{
+    			JSONObject comment = new JSONObject( payload.getString("comment") );
+    			ret = comment.getString("html_url");
+    		}
+    		else if(eventType.equals("CreateEvent"))
+    		{
+    			JSONObject repo = new JSONObject( payload.getString("repo") );
+    			supportString = repo.getString("url");
+    			ret = supportString.replace(toReplace, replaceWith);
+    		}
+    		else if(eventType.equals("DeleteEvent"))
+    		{
+    			JSONObject repo = new JSONObject( payload.getString("repo") );
+    			supportString = repo.getString("url");
+    			ret = supportString.replace(toReplace, replaceWith);
+    		}
+    	    else if(eventType.equals("DeploymentEvent"))
+    		{
+    	    	JSONObject innerPayload = new JSONObject( payload.getString("payload") );
+    			supportString = innerPayload.getString("url");
+    			ret = supportString.replace(toReplace, replaceWith);
+    		}
+    	    else if(eventType.equals("DeploymentStatusEvent"))
+    		{
+    	    	JSONObject innerPayload = new JSONObject( payload.getString("payload") );
+    			supportString = innerPayload.getString("url");
+    			ret = supportString.replace(toReplace, replaceWith);
+    		}
+    	    else if(eventType.equals("DownloadEvent"))
+    		{
+    	    	//no longer created
+    	    	ret = "DownloadEvent";
+    		}
+    	    else if(eventType.equals("FollowEvent"))
+    		{
+    	    	//only user to user
+    	    	ret = "FollowEvent";
+    		}
+    	    else if(eventType.equals("ForkEvent"))
+    		{
+    	    	JSONObject forkee = new JSONObject( payload.getString("payload") );
+    	    	ret = forkee.getString("html_url");
+    		}
+    	    else if(eventType.equals("ForkApplyEvent"))
+    		{
+    	    	//no longer created
+    	    	ret = "ForkApplyEvent";
+    		}
+    	    else if(eventType.equals("GistEvent"))
+    		{
+    	    	//no longer created
+    	    	ret = "GistEvent";
+    		}
+    	    else if(eventType.equals("GollumEvent"))
+    		{
+    	    	JSONArray pages = new JSONArray( payload.getString("pages") );
+    	    	JSONObject page = pages.getJSONObject(0);
+    	    	ret = page.getString("html_url");
+    		}
+    	    else if(eventType.equals("IssueCommentEvent"))
+    		{
+    	    	JSONObject issue = new JSONObject( payload.getString("issue") );
+    	    	ret = issue.getString("html_url");
+    		}
+    	    else if(eventType.equals("IssuesEvent"))
+    		{
+    	    	JSONObject issue = new JSONObject( payload.getString("issue") );
+    	    	ret = issue.getString("html_url");
+    		}
+    	    else if(eventType.equals("MemberEvent"))
+    		{
+    	    	JSONObject member = new JSONObject( payload.getString("member") );
+    	    	ret = member.getString("html_url");
+    		}
+    	    else if(eventType.equals("PageBuildEvent"))
+    		{
+    	    	JSONObject pagebuild = new JSONObject( payload.getString("pagebuild") );
+    	    	supportString = pagebuild.getString("url");
+    	    	ret = supportString.replace(toReplace, replaceWith);
+    		}
+    	    else if(eventType.equals("PublicEvent"))
+    		{
+    	    	JSONObject repo = new JSONObject( payload.getString("repo") );
+    			supportString = repo.getString("url");
+    			ret = supportString.replace(toReplace, replaceWith);
+    		}
+    	    else if(eventType.equals("PullRequestEvent"))
+    		{
+    	    	JSONObject pullrequest = new JSONObject( payload.getString("pull_request") );
+    	    	ret = pullrequest.getString("html_url");
+    		}
+    	    else if(eventType.equals("PullRequestReviewCommentEvent"))
+    		{
+    	    	JSONObject comment = new JSONObject( payload.getString("comment") );
+    			ret = comment.getString("html_url");
+    		}
+    	    else if(eventType.equals("PushEvent"))
+    		{
+    	    	JSONArray commits = new JSONArray( payload.getString("commits") );
+    	    	JSONObject commit = commits.getJSONObject(0);
+    	    	supportString = commit.getString("url");
+    			ret = supportString.replace(toReplace, replaceWith);
+    		}
+    	    else if(eventType.equals("ReleaseEvent"))
+    		{
+    	    	JSONObject release = new JSONObject( payload.getString("release") );
+    			ret = release.getString("html_url");
+    		}
+    	    else if(eventType.equals("StatusEvent"))
+    		{
+    	    	ret = payload.getString("target_url");
+    		}
+    	    else if(eventType.equals("TeamAddEvent"))
+    		{
+    	    	//user only
+    	    	ret = "TeamAddEvent";
+    		}
+    	    else if(eventType.equals("WatchEvent"))
+    		{
+    	    	//user only
+    			ret = "WatchEvent";
+    		}
+    	    else
+    	    {
+    	    	ret = "Unhandled Event";
+    	    }
+    	}
+    	catch (JSONException e)
+    	{
+			LOG.i("WAFFLE", "cannot summarize " + e.getMessage());
+    	}
+    	
+    	return ret;
+	}
 
     public String getEventOverview(JSONObject event)
     {
     	String ret = "";
-    	GHEventPayload temp;
-    	GHEventPayload.IssueComment issueComment = new GHEventPayload.IssueComment();
-    	GHEventPayload.PullRequest pullRequest = new GHEventPayload.PullRequest();
-    	GHEventPayload.Push push = new GHEventPayload.Push();
     	String supportString = "";
-    	int i = 0;
-    	int j = 0;
     	
     	try
     	{
@@ -571,7 +724,7 @@ public class MainActivity extends DroidGap
 			  	  		      {
 			  	  		    	  final String item = (String) parent.getItemAtPosition(position);
 			  	  		    	  Toast.makeText(getBaseContext(), item, Toast.LENGTH_LONG).show();
-			  	  		    	  showEventPopup();
+			  	  		    	  showEventPopup(position);
 			  	  		      }
 			  	  		    }
 			  	  	    );
@@ -714,11 +867,23 @@ public class MainActivity extends DroidGap
 					listSize = MaxEventListSize;
 				}
 				
-		      	if(stringList != null)
+				if(stringList != null)
 		      	{
 		      		stringList.clear();
 		      	}
 		      	stringList = new ArrayList<String>();
+		      	
+		      	if(longStringList != null)
+		      	{
+		      		longStringList.clear();
+		      	}
+		      	longStringList = new ArrayList<String>();
+		      	
+		      	if(linkStringList != null)
+		      	{
+		      		linkStringList.clear();
+		      	}
+		      	linkStringList = new ArrayList<String>();
 		      	
 		      	if(jsonEventList != null)
 		      	{
@@ -729,9 +894,19 @@ public class MainActivity extends DroidGap
 	    		for (int i = 0; i < listSize; i++) 
 	    		{
 	    			JSONObject tempEventInfo = mJsonArray.getJSONObject(i);
-	      			String temp = getEventOverview( tempEventInfo );
-	      			stringList.add(temp);
 	    			jsonEventList.add( tempEventInfo );
+	    			
+	    			//short description
+	    			String temp = getEventOverview( tempEventInfo );
+	      			stringList.add(temp);
+	    			
+	    			//long description
+	    			temp = getEventLongDescription( tempEventInfo );
+	      			longStringList.add(temp);
+	    			
+	    			//link to page
+	    			temp = getEventPageLink( tempEventInfo );
+	      			linkStringList.add(temp);
 	    		}
 			} 
 			catch (JSONException e) 
@@ -757,7 +932,7 @@ public class MainActivity extends DroidGap
     }
     
     // The method that displays the popup.
-  	private void showEventPopup()//(GHEventInfo eventInfo) 
+  	private void showEventPopup(final int index) 
   	{
   		LOG.i("WAFFLE","calling popup");
   		int popupWidth = 300;
@@ -790,6 +965,20 @@ public class MainActivity extends DroidGap
   		popupWindow.showAtLocation(layout, Gravity.NO_GRAVITY, (width - popupWidth)/2, (height - popupHeight)/2);
    
   		// Getting a reference to Close button, and close the popup when clicked.
+  		Button gotoPage = (Button) layout.findViewById(R.id.goToPage);
+  		gotoPage.setOnClickListener
+  		(
+  			new View.OnClickListener() 
+  			{
+  				@Override
+  				public void onClick(View v) 
+  				{
+  					Intent intent = new Intent(Intent.ACTION_VIEW, Uri.parse( linkStringList.get(index) ));
+  					startActivity(intent);
+  				}
+  			}
+  		);
+  		
   		Button close = (Button) layout.findViewById(R.id.close);
   		close.setOnClickListener
   		(
