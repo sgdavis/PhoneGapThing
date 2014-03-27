@@ -318,6 +318,163 @@ public class MainActivity extends DroidGap
 	public String getEventLongDescription(JSONObject event)
 	{
 		String ret = "";
+    	String supportString = "";
+    	String toReplace = "https://api.github.com/repos/";
+    	String replaceWith = "https://github.com/";
+    	int i = 0;
+    	
+    	try
+    	{
+    		String eventType = event.getString("type");
+    		
+    		JSONObject payload = new JSONObject( event.getString("payload") );
+    		JSONObject actor = new JSONObject( event.getString("actor") );
+    		
+    		if(eventType.equals("CommitCommentEvent"))
+    		{
+    			JSONObject comment = new JSONObject( payload.getString("comment") );
+    			ret = "Comment number " + comment.getString("position") + " on line " + comment.getString("line") + " of file " + comment.getString("path") + ":\n"  + comment.getString("body");
+    		}
+    		else if(eventType.equals("CreateEvent"))
+    		{
+    			String refType = payload.getString("ref_type");
+    			String capitol   = Character.toString(refType.charAt(0)).toUpperCase();
+    			refType = capitol + refType.substring(1,refType.length());
+    			String refName = payload.getString("ref");
+    			if(refName.compareToIgnoreCase("null") == 0)
+    			{
+    				JSONObject repository = new JSONObject( event.getString("repo") );
+    				refName = repository.getString("name");
+    			}
+    			ret = refType + " created with the name of " + refName;
+    		}
+    		else if(eventType.equals("DeleteEvent"))
+    		{
+    			String refType = payload.getString("ref_type");
+    			String capitol   = Character.toString(refType.charAt(0)).toUpperCase();
+    			refType = capitol + refType.substring(1,refType.length());
+    			String refName = payload.getString("ref");
+    			if(refName.compareToIgnoreCase("null") == 0)
+    			{
+    				JSONObject repository = new JSONObject( event.getString("repo") );
+    				refName = repository.getString("name");
+    			}
+    			ret = refType + " deleted with the name of " + refName;
+    		}
+    	    else if(eventType.equals("DeploymentEvent"))
+    		{
+    			ret = "Deployed to " + payload.getString("name") + " with description:\n" + payload.getString("description");
+    		}
+    	    else if(eventType.equals("DeploymentStatusEvent"))
+    		{
+    	    	ret = "Deploymeny status changed for " + payload.getString("name") + " with description:\n" + payload.getString("description");
+    		}
+    	    else if(eventType.equals("DownloadEvent"))
+    		{
+    	    	//no longer created
+    	    	ret = "DownloadEvent";
+    		}
+    	    else if(eventType.equals("FollowEvent"))
+    		{
+    	    	//only user to user
+    	    	ret = "FollowEvent";
+    		}
+    	    else if(eventType.equals("ForkEvent"))
+    		{
+    	    	JSONObject forkee = new JSONObject( payload.getString("forkee") );
+    	    	ret = "Repository forked to " + forkee.getString("full_name") + " with description " + forkee.getString("description");
+    		}
+    	    else if(eventType.equals("ForkApplyEvent"))
+    		{
+    	    	//no longer created
+    	    	ret = "ForkApplyEvent";
+    		}
+    	    else if(eventType.equals("GistEvent"))
+    		{
+    	    	//no longer created
+    	    	ret = "GistEvent";
+    		}
+    	    else if(eventType.equals("GollumEvent"))
+    		{
+    	    	JSONArray pages = new JSONArray( payload.getString("pages") );
+    	    	for(i = 0; i < pages.length(); i++)
+    	    	{
+    	    		JSONObject page = pages.getJSONObject(i);
+    	    		ret += ( "Page " + page.getString("page_name") + " was " + page.getString("action") + "\n" );
+    	    	}
+    		}
+    	    else if(eventType.equals("IssueCommentEvent"))
+    		{
+    	    	JSONObject issue = new JSONObject( payload.getString("issue") );
+    	    	JSONObject comment = new JSONObject( payload.getString("comment") );
+    	    	ret = "Comment on issue " + issue.getString("title") + ":\n" + comment.getString("body");
+    		}
+    	    else if(eventType.equals("IssuesEvent"))
+    		{
+    	    	JSONObject issue = new JSONObject( payload.getString("issue") );
+    	    	ret = "Issue " + issue.getString("title") + "created with body:\n" + issue.getString("body");
+    		}
+    	    else if(eventType.equals("MemberEvent"))
+    		{
+    	    	JSONObject member = new JSONObject(payload.getString("member"));
+    	    	ret = "Member " + member.getString("login") + " " + payload.getString("action") + " by " + actor.getString("login");
+    		}
+    	    else if(eventType.equals("PageBuildEvent"))
+    		{
+    	    	ret = "Page build by " + actor.getString("login");
+    		}
+    	    else if(eventType.equals("PublicEvent"))
+    		{
+    	    	ret = "Repository made public by " + actor.getString("login");
+    		}
+    	    else if(eventType.equals("PullRequestEvent"))
+    		{
+    	    	JSONObject pullrequest = new JSONObject( payload.getString("pull_request") );
+    	    	ret = "Pull request " + pullrequest.getString("title") + "created with body:\n" + pullrequest.getString("body");
+    		}
+    	    else if(eventType.equals("PullRequestReviewCommentEvent"))
+    		{
+    	    	JSONObject comment = new JSONObject( payload.getString("comment") );
+    	    	ret = "Pull request comment numbe " + comment.getString("position") + ":\n" + comment.getString("body");
+    		}
+    	    else if(eventType.equals("PushEvent"))
+    		{
+    	    	JSONArray commits = new JSONArray( payload.getString("commits") );    			
+    			for(i = 0; i < commits.length(); i++)
+    	    	{
+    	    		JSONObject commit = commits.getJSONObject(i);
+    	    		ret += ( "Commit " + i + ": " + commit.getString("message") + "\n" );
+    	    	}
+    		}
+    	    else if(eventType.equals("ReleaseEvent"))
+    		{
+    	    	JSONObject release = new JSONObject( payload.getString("release") );
+    			ret = "Release " + release.getString("target_commitish") + " published as " + release.getString("name") + "with description " + release.getString("body");
+    		}
+    	    else if(eventType.equals("StatusEvent"))
+    		{
+    	    	ret = "Status changed to " + payload.getString("state") + " with description " + payload.getString("description");
+    		}
+    	    else if(eventType.equals("TeamAddEvent"))
+    		{
+    	    	//user only
+    	    	ret = "TeamAddEvent";
+    		}
+    	    else if(eventType.equals("WatchEvent"))
+    		{
+    	    	//user only
+    			ret = "WatchEvent";
+    		}
+    	    else
+    	    {
+    	    	ret = "Unhandled Event";
+    	    }
+    	}
+    	catch (JSONException e)
+    	{
+			LOG.i("WAFFLE", "cannot summarize " + e.getMessage());
+    	}
+    	
 		return ret;
 	}
 	
@@ -1020,6 +1177,10 @@ public class MainActivity extends DroidGap
   				}
   			}
   		);
+  		
+  		TextView popupTextView = (TextView) layout.findViewById(R.id.popuptext2);
+		popupTextView.setText(longStringList.get(index));
+		popupTextView.setMovementMethod(new ScrollingMovementMethod());
   		
   		//setContentView(R.layout.activity_main);
   	}
