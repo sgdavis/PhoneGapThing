@@ -166,7 +166,7 @@ public class MainActivity extends DroidGap
 		{
 			if(textview != null)
 			{
-				textview.setText("IsNull");
+				textview.setText("This is the original call, not from alert");
 			}
 		}
 
@@ -340,13 +340,13 @@ public class MainActivity extends DroidGap
     		}
     		else if(eventType.equals("CreateEvent"))
     		{
-    			JSONObject repo = new JSONObject( payload.getString("repo") );
+    			JSONObject repo = new JSONObject( event.getString("repo") );
     			supportString = repo.getString("url");
     			ret = supportString.replace(toReplace, replaceWith);
     		}
     		else if(eventType.equals("DeleteEvent"))
     		{
-    			JSONObject repo = new JSONObject( payload.getString("repo") );
+    			JSONObject repo = new JSONObject( event.getString("repo") );
     			supportString = repo.getString("url");
     			ret = supportString.replace(toReplace, replaceWith);
     		}
@@ -533,7 +533,9 @@ public class MainActivity extends DroidGap
     		}
     	    else if(eventType.equals("GollumEvent"))
     		{
-    	    	ret = "Wiki page updated by " + payload.getString("name") + " at " + event.getString("created_at");
+    	    	JSONArray pages = new JSONArray( payload.getString("pages") );
+    	    	JSONObject page = pages.getJSONObject(0);
+    	    	ret = "Wiki page " + page.getString("page_name") + " updated by " + actor.getString("login") + " at " + event.getString("created_at");
     		}
     	    else if(eventType.equals("IssueCommentEvent"))
     		{
@@ -722,8 +724,6 @@ public class MainActivity extends DroidGap
 			  	  		      @Override
 			  	  		      public void onItemClick(AdapterView<?> parent, final View view, int position, long id) 
 			  	  		      {
-			  	  		    	  final String item = (String) parent.getItemAtPosition(position);
-			  	  		    	  Toast.makeText(getBaseContext(), item, Toast.LENGTH_LONG).show();
 			  	  		    	  showEventPopup(position);
 			  	  		      }
 			  	  		    }
