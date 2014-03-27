@@ -6,8 +6,10 @@ import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.net.HttpURLConnection;
 import java.net.URL;
+import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Calendar;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
@@ -894,6 +896,33 @@ public class MainActivity extends DroidGap
 	    		for (int i = 0; i < listSize; i++) 
 	    		{
 	    			JSONObject tempEventInfo = mJsonArray.getJSONObject(i);
+	    			
+	    			String dateString = tempEventInfo.getString("created_at");
+	    			
+			    	SimpleDateFormat formatter = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss'Z'");
+			    	Date eventDate = null;
+			    	try 
+			    	{
+			    		eventDate = formatter.parse(dateString);
+			    		Calendar cal = Calendar.getInstance();
+			    		cal.setTime(eventDate);
+			    		cal.add(Calendar.HOUR, -6);
+			    		eventDate = cal.getTime();
+					} 
+			    	catch (ParseException e) 
+					{
+						e.printStackTrace();
+					}
+	    	
+	    			if( delayTimer > minimumDelay && (eventDate == null || eventDate.before(cutoffDate)) )
+	    			{
+	    				continue;
+	    			}
+	    			else if(eventDate != null)
+	    			{
+	    				LOG.i("MEGAWAFFLE","event date: " + eventDate.toString() + " - cutoff date: " + cutoffDate.toString());
+	    			}
+	    			
 	    			jsonEventList.add( tempEventInfo );
 	    			
 	    			//short description
