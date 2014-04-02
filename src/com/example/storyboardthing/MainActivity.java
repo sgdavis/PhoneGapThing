@@ -72,9 +72,11 @@ import com.example.storyboardthing.R;
 public class MainActivity extends DroidGap 
 {
 	private long lastChecked;
-	public TextView textview;
 	private Context myContext;
 	private Button notificationButton;
+	
+	private TextView firstLabel;
+	private TextView secondLabel;
 	
 	private String repoName = "PhoneGapThing";
 	private String ownerName = "sgdavis";
@@ -111,6 +113,30 @@ public class MainActivity extends DroidGap
 	private boolean notWorking;
 	private int MaxEventListSize = 30;
 	
+	private int numCommitCommentEvent = 0;
+	private int numCreateEvent = 0;
+	private int numDeleteEvent = 0;
+	private int numDeploymentEvent = 0;
+	private int numDeploymentStatusEvent = 0;
+	private int numDownloadEvent = 0;
+	private int numFollowEvent = 0;
+	private int numForkEvent = 0;
+	private int numForkApplyEvent = 0;
+	private int numGistEvent = 0;
+	private int numGollumEvent = 0;
+	private int numIssueCommentEvent = 0;
+	private int numIssuesEvent = 0;
+	private int numMemberEvent = 0;
+	private int numPageBuildEvent = 0;
+	private int numPublicEvent = 0;
+	private int numPullRequestEvent = 0;
+	private int numPullRequestReviewCommentEvent = 0;
+	private int numPushEvent = 0;
+	private int numReleaseEvent = 0;
+	private int numStatusEvent = 0;
+	private int numTeamAddEvent = 0;
+	private int numWatchEvent = 0;
+	
 	@Override
 	public void onCreate(Bundle savedInstanceState) 
 	{
@@ -122,9 +148,9 @@ public class MainActivity extends DroidGap
 		super.setIntegerProperty("splashscreen", R.drawable.splash);
 		setContentView(R.layout.activity_main);
 		
-		textview = (TextView) findViewById(R.id.textView1);
-		textview.setMovementMethod(new ScrollingMovementMethod());
 		notificationButton = (Button) findViewById(R.id.notificationButton);
+		firstLabel  = (TextView) findViewById(R.id.itemLabel1);
+		secondLabel  = (TextView) findViewById(R.id.itemLabel2);
 			
 		if(getIntent().getBooleanExtra("FromPrevious",false) == true)
 		{
@@ -133,10 +159,6 @@ public class MainActivity extends DroidGap
 			SimpleDateFormat formatter = new SimpleDateFormat("EEEE, MMMM d, yyyy HH:mm");
 			String callString = formatter.format(new Date(lastCalledTime));
 			String checkString = formatter.format(new Date(lastCheckedTime));
-			if(textview != null)
-			{
-				textview.setText("Last called at " + callString + "\nLast viewed at " + checkString);
-			}
 			
 			repoName = getIntent().getStringExtra("RepoName");
 			ownerName = getIntent().getStringExtra("OwnerName");
@@ -150,9 +172,11 @@ public class MainActivity extends DroidGap
 			EditText tempEdit = ( (EditText) findViewById(R.id.editText1) );
 			tempEdit.setText("");
 			tempEdit.setHint("");
+			tempEdit.setVisibility(View.GONE);
 			tempEdit = ( (EditText) findViewById(R.id.editText2) );
 			tempEdit.setText("");
 			tempEdit.setHint("");
+			tempEdit.setVisibility(View.GONE);
 			
 			if(stage.equalsIgnoreCase("events"))
 			{
@@ -163,13 +187,6 @@ public class MainActivity extends DroidGap
 			
 			notificationButton.setText("WORKING");
 			startChecking();
-		}
-		else
-		{
-			if(textview != null)
-			{
-				textview.setText("This is the original call, not from alert");
-			}
 		}
 
 		notificationButton.setOnClickListener
@@ -203,35 +220,69 @@ public class MainActivity extends DroidGap
 			username = tempEdit.getText().toString();
 			tempEdit.setText("");
 			tempEdit.setHint("Minutes");
+			tempEdit.setVisibility(View.VISIBLE);
 			tempEdit = ( (EditText) findViewById(R.id.editText2) );
 			password = tempEdit.getText().toString();
 			tempEdit.setText("");
 			tempEdit.setHint("Seconds");
+			tempEdit.setVisibility(View.VISIBLE);
+			
+			firstLabel.setVisibility(View.VISIBLE);
+			secondLabel.setVisibility(View.VISIBLE);
+			firstLabel.setText("Minutes until refresh");
+			secondLabel.setText("Seconds until refresh");
+			
+			notificationButton.setText("WORKING");
+			startChecking();
 	    }
 		else if(stage.equalsIgnoreCase("repos"))
 		{
+			stage = "login";
 			EditText tempEdit = ( (EditText) findViewById(R.id.editText1) );
-			minutes = Integer.parseInt(tempEdit.getText().toString());
 			tempEdit.setText("");
-			tempEdit.setHint("");
+			tempEdit.setHint("Username");
+			tempEdit.setVisibility(View.VISIBLE);
 			tempEdit = ( (EditText) findViewById(R.id.editText2) );
-			seconds = Integer.parseInt(tempEdit.getText().toString());
 			tempEdit.setText("");
-			tempEdit.setHint("");
+			tempEdit.setHint("Password");
+			tempEdit.setVisibility(View.VISIBLE);
 			
-			delayTimer = minutes * 60 * 1000 + seconds * 1000;
-			if(delayTimer < minimumDelay)
-			{
-				delayTimer = minimumDelay;
-			}
+			firstLabel.setVisibility(View.VISIBLE);
+			secondLabel.setVisibility(View.VISIBLE);
+			firstLabel.setText("GitHub Username");
+			secondLabel.setText("GitHub Password");
+			
+			if(stringList != null)
+	      	{
+	      		stringList.clear();
+	      	}
+	      	stringList = new ArrayList<String>();
+			notificationButton.setText("LOGIN");
+			final ListView listview = (ListView) findViewById(R.id.listview1);		
+  	  	    final ArrayAdapter adapter = new ArrayAdapter(myContext, android.R.layout.simple_list_item_1, stringList);
+  	  	    listview.setAdapter(adapter);
 		}
 		else if(stage.equalsIgnoreCase("events") || stage.equalsIgnoreCase("eventsSpecial"))
 	    {
 			stage = "repos";
+			
+			EditText tempEdit = ( (EditText) findViewById(R.id.editText1) );
+			tempEdit.setText("");
+			tempEdit.setHint("Minutes");
+			tempEdit.setVisibility(View.VISIBLE);
+			tempEdit = ( (EditText) findViewById(R.id.editText2) );
+			tempEdit.setText("");
+			tempEdit.setHint("Seconds");
+			tempEdit.setVisibility(View.VISIBLE);
+			
+			firstLabel.setVisibility(View.VISIBLE);
+			secondLabel.setVisibility(View.VISIBLE);
+			firstLabel.setText("Minutes until refresh");
+			secondLabel.setText("Seconds until refresh");
+			
+			notificationButton.setText("WORKING");
+			startChecking();
 	    }
-		
-		notificationButton.setText("WORKING");
-		startChecking();
 	}
 	
 	public void startChecking()
@@ -627,7 +678,7 @@ public class MainActivity extends DroidGap
     	
     	return ret;
 	}
-
+	
     public String getEventOverview(JSONObject event)
     {
     	String ret = "";
@@ -640,31 +691,43 @@ public class MainActivity extends DroidGap
     		JSONObject payload = new JSONObject( event.getString("payload") );
     		JSONObject actor = new JSONObject( event.getString("actor") );
     		
+    		String dateString = event.getString("created_at");
+	    	SimpleDateFormat formatter = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss'Z'");
+	    	Date eventDate = null;
+	    	try 
+	    	{
+	    		eventDate = formatter.parse(dateString);
+	    		Calendar cal = Calendar.getInstance();
+	    		cal.setTime(eventDate);
+	    		cal.add(Calendar.HOUR, -6);
+	    		eventDate = cal.getTime();
+			} 
+	    	catch (ParseException e) 
+			{
+				e.printStackTrace();
+			}
+	    	
+	    	ret = actor.getString("login") + " - " + eventType + "\n" + eventDate.toString();
+    		
     		if(eventType.equals("CommitCommentEvent"))
     		{
-    			ret = "Comment committed by " + actor.getString("login") + " at " + event.getString("created_at");
+    			numCommitCommentEvent++;
     		}
     		else if(eventType.equals("CreateEvent"))
     		{
-    			String refType = payload.getString("ref_type");
-    			String capitol   = Character.toString(refType.charAt(0)).toUpperCase();
-    			refType = capitol + refType.substring(1,refType.length());
-    			ret = refType + " created by " + actor.getString("login") + " at " + event.getString("created_at");
+    			numCreateEvent++;
     		}
     		else if(eventType.equals("DeleteEvent"))
     		{
-    			String refType = payload.getString("ref_type");
-    			String capitol   = Character.toString(refType.charAt(0)).toUpperCase();
-    			refType = capitol + refType.substring(1,refType.length());
-    			ret = refType + " deleted by " + actor.getString("login") + " at " + event.getString("created_at");
+    			numDeleteEvent++;
     		}
     	    else if(eventType.equals("DeploymentEvent"))
     		{
-    	    	ret = "Deployed to repo " + payload.getString("name") + " at " + event.getString("created_at");
+    	    	numDeploymentEvent++;
     		}
     	    else if(eventType.equals("DeploymentStatusEvent"))
     		{
-    	    	ret = "Deployed to repo " + payload.getString("name") + " became " + payload.getString("state") + " at " + event.getString("created_at");
+    	    	numDeploymentStatusEvent++;
     		}
     	    else if(eventType.equals("DownloadEvent"))
     		{
@@ -678,7 +741,7 @@ public class MainActivity extends DroidGap
     		}
     	    else if(eventType.equals("ForkEvent"))
     		{
-    	    	ret = "Repository forked by " + payload.getString("name") + " at " + event.getString("created_at");
+    	    	numForkEvent++;
     		}
     	    else if(eventType.equals("ForkApplyEvent"))
     		{
@@ -693,51 +756,47 @@ public class MainActivity extends DroidGap
     	    else if(eventType.equals("GollumEvent"))
     		{
     	    	JSONArray pages = new JSONArray( payload.getString("pages") );
-    	    	JSONObject page = pages.getJSONObject(0);
-    	    	ret = "Wiki page " + page.getString("page_name") + " updated by " + actor.getString("login") + " at " + event.getString("created_at");
+    	    	numGollumEvent += pages.length();
     		}
     	    else if(eventType.equals("IssueCommentEvent"))
     		{
-    	    	JSONObject issue = new JSONObject(payload.getString("issue"));
-    	    	ret = "Issue " + issue.getString("title") + " commented on by " + actor.getString("login") + " at " + event.getString("created_at");
+    	    	numIssueCommentEvent++;
     		}
     	    else if(eventType.equals("IssuesEvent"))
     		{
-    	    	JSONObject issue = new JSONObject(payload.getString("issue"));
-    	    	ret = "Issue " + issue.getString("title") + " " + payload.getString("action") + " by " + actor.getString("login") + " at " + event.getString("created_at");
+    	    	numIssuesEvent++;
     		}
     	    else if(eventType.equals("MemberEvent"))
     		{
-    	    	JSONObject member = new JSONObject(payload.getString("member"));
-    	    	ret = "Member " + member.getString("login") + " " + payload.getString("action") + " by " + actor.getString("login") + " at " + event.getString("created_at");
+    	    	numMemberEvent++;
     		}
     	    else if(eventType.equals("PageBuildEvent"))
     		{
-    	    	ret = "Page build by " + actor.getString("login") + " at " + event.getString("created_at");
+    	    	numPageBuildEvent++;
     		}
     	    else if(eventType.equals("PublicEvent"))
     		{
-    	    	ret = "Repository made public by " + actor.getString("login") + " at " + event.getString("created_at");
+    	    	numPublicEvent++;
     		}
     	    else if(eventType.equals("PullRequestEvent"))
     		{
-    	    	ret = "Pull request " + payload.getInt("number") + " " + payload.getString("action") + " by " + actor.getString("login") + " at " + event.getString("created_at");
+    	    	numPullRequestEvent++;
     		}
     	    else if(eventType.equals("PullRequestReviewCommentEvent"))
     		{
-    	    	ret = "Pull request commented on by " + actor.getString("login") + " at " + event.getString("created_at");
+    	    	numPullRequestReviewCommentEvent++;
     		}
     	    else if(eventType.equals("PushEvent"))
     		{
-    	    	ret = payload.getInt("size") + " commit(s) pushed by " + actor.getString("login") + " at " + event.getString("created_at");
+    	    	numPushEvent += payload.getInt("size");
     		}
     	    else if(eventType.equals("ReleaseEvent"))
     		{
-    	    	ret = "Release published by " + actor.getString("login") + " at " + event.getString("created_at");
+    	    	numReleaseEvent++;
     		}
     	    else if(eventType.equals("StatusEvent"))
     		{
-    	    	ret = "Status changed to " + payload.getString("state") + " by " + actor.getString("login") + " at " + event.getString("created_at");
+    	    	numStatusEvent++;
     		}
     	    else if(eventType.equals("TeamAddEvent"))
     		{
@@ -809,7 +868,7 @@ public class MainActivity extends DroidGap
 		      	
 		      	String tempString = "";
 		      	
-		      	if(textview != null)
+		      	if(repositoryOwnerList != null)
 		      	{
 		      		for(int i = 0 ; i < repositoryList.size(); i++)
 		      		{
@@ -846,11 +905,19 @@ public class MainActivity extends DroidGap
 			  				username = tempEdit.getText().toString();
 			  				tempEdit.setText("");
 			  				tempEdit.setHint("Username");
+			  				tempEdit.setVisibility(View.VISIBLE);
 			  				tempEdit = ( (EditText) findViewById(R.id.editText2) );
 			  				password = tempEdit.getText().toString();
 			  				tempEdit.setText("");
 			  				tempEdit.setHint("Password");
+			  				tempEdit.setVisibility(View.VISIBLE);
 			  				notificationButton.setText("LOGIN");
+			  				
+			  				firstLabel.setVisibility(View.VISIBLE);
+			  				secondLabel.setVisibility(View.VISIBLE);
+			  				firstLabel.setText("GitHub Username");
+			  				secondLabel.setText("GitHub Password");
+			  				
 			  				final String item = "Login failed, please try again.";
 		  	  		    	Toast.makeText(getBaseContext(), item, Toast.LENGTH_LONG).show();
 		  	  			}
@@ -875,16 +942,27 @@ public class MainActivity extends DroidGap
 		  	  			final ListView listview = (ListView) findViewById(R.id.listview1);		
 			  	  	    final ArrayAdapter adapter = new ArrayAdapter(myContext, android.R.layout.simple_list_item_1, stringList);
 			  	  	    listview.setAdapter(adapter);
-		
+			  	  	    
 			  	  	    listview.setOnItemClickListener
 			  	  	    (
 			  	  	    	new AdapterView.OnItemClickListener() 
 			  	  		    {
-			  	  		      @Override
-			  	  		      public void onItemClick(AdapterView<?> parent, final View view, int position, long id) 
-			  	  		      {
-			  	  		    	  showEventPopup(position);
-			  	  		      }
+			  	  	    		@Override
+			  	  	    		public void onItemClick(AdapterView<?> parent, final View view, int position, long id) 
+			  	  	    		{
+			  	  	    			String eventTitle = "";
+			  	  	    		
+				  	  		    	try
+						  	  	    {
+						  	  	    	eventTitle = "Summary of " + jsonEventList.get(position).getString("type");
+						  	  	    }
+						  	  	    catch(JSONException e)
+						  	  	    {
+						  	  	    	//
+						  	  	    }
+			  	  		    	
+				  	  		    	showEventPopup(position, eventTitle);
+			  	  		      	}
 			  	  		    }
 			  	  	    );
 	  	  			}
@@ -904,7 +982,7 @@ public class MainActivity extends DroidGap
 	  	  		{
 	  	  			public void run() 
 	  	  			{ 
-	  	  				notificationButton.setText("OK");
+	  	  				notificationButton.setText("LOG OUT");		  	  			
 		  	  			final ListView listview = (ListView) findViewById(R.id.listview1);		
 			  	  	    final ArrayList<String> list = new ArrayList<String>();
 			  	  	    
@@ -920,40 +998,45 @@ public class MainActivity extends DroidGap
 			  	  	    (
 			  	  	    	new AdapterView.OnItemClickListener() 
 			  	  		    {
-			  	  		      @Override
-			  	  		      public void onItemClick(AdapterView<?> parent, final View view, int position, long id) 
-			  	  		      {
-			  	  		    	  final String item = (String) parent.getItemAtPosition(position);
-			  	  		    	  repoName = item;
-			  	  		    	  ownerName = repositoryOwnerList.get(position);			  	  		    	  
-			  	  		    	  stage = "events";
-			  	  		    	  notificationButton.setText("WORKING");
+				  	  			@Override
+				  	  			public void onItemClick(AdapterView<?> parent, final View view, int position, long id) 
+				  	  			{
+				  	  				final String item = (String) parent.getItemAtPosition(position);
+				  	  				repoName = item;
+				  	  				ownerName = repositoryOwnerList.get(position);			  	  		    	  
+				  	  				stage = "events";
+				  	  				notificationButton.setText("WORKING");
 			  	  		    	  
-			  	  		    	  minutes = 0;
-			  	  		    	  seconds = 0;
-			  	  		    	  EditText tempEdit = ( (EditText) findViewById(R.id.editText1) );
-			  	  		    	  if(tempEdit.getText().length() != 0)
-			  	  		    	  {
-			  	  		    		  minutes = Integer.parseInt(tempEdit.getText().toString());
-			  	  		    	  }
-			  	  		    	  tempEdit.setText("");
-			  	  		    	  tempEdit.setHint("");
-			  	  		    	  tempEdit = ( (EditText) findViewById(R.id.editText2) );
-			  	  		    	  if(tempEdit.getText().length() != 0)
-			  	  		    	  {
-			  	  		    		  seconds = Integer.parseInt(tempEdit.getText().toString());
-			  	  		    	  }
-			  	  		    	  tempEdit.setText("");
-			  	  		    	  tempEdit.setHint("");
+				  	  				minutes = 0;
+				  	  				seconds = 0;
+				  	  				EditText tempEdit = ( (EditText) findViewById(R.id.editText1) );
+				  	  				if(tempEdit.getText().length() != 0)
+				  	  				{
+				  	  					minutes = Integer.parseInt(tempEdit.getText().toString());
+				  	  				}
+				  	  				tempEdit.setText("");
+				  	  				tempEdit.setHint("");
+				  	  				tempEdit.setVisibility(View.GONE);
+				  	  				tempEdit = ( (EditText) findViewById(R.id.editText2) );
+				  	  				if(tempEdit.getText().length() != 0)
+				  	  				{
+				  	  					seconds = Integer.parseInt(tempEdit.getText().toString());
+				  	  				}
+				  	  				tempEdit.setText("");
+				  	  				tempEdit.setHint("");
+				  	  				tempEdit.setVisibility(View.GONE);
+			  	  		    	  
+				  	  				firstLabel.setVisibility(View.GONE);
+				  	  				secondLabel.setVisibility(View.GONE);
 					  	  			
-			  	  		    	  delayTimer = minutes * 60 * 1000 + seconds * 1000;
-			  	  		    	  if(delayTimer < minimumDelay)
-			  	  		    	  {
-			  	  		    		  delayTimer = minimumDelay;
-			  	  		    	  }
+				  	  				delayTimer = minutes * 60 * 1000 + seconds * 1000;
+				  	  				if(delayTimer < minimumDelay)
+				  	  				{
+				  	  					delayTimer = minimumDelay;
+				  	  				}
 					  	  			
-			  	  		    	  startChecking();
-			  	  		      }
+				  	  				startChecking();
+				  	  			}
 			  	  		    }
 			  	  	    );
 	  	  			}
@@ -1050,6 +1133,30 @@ public class MainActivity extends DroidGap
 		      	}
 		      	jsonEventList = new ArrayList<JSONObject>();
 		      	
+		      	numCommitCommentEvent = 0;
+		    	numCreateEvent = 0;
+		    	numDeleteEvent = 0;
+		    	numDeploymentEvent = 0;
+		    	numDeploymentStatusEvent = 0;
+		    	numDownloadEvent = 0;
+		    	numFollowEvent = 0;
+		    	numForkEvent = 0;
+		    	numForkApplyEvent = 0;
+		    	numGistEvent = 0;
+		    	numGollumEvent = 0;
+		    	numIssueCommentEvent = 0;
+		    	numIssuesEvent = 0;
+		    	numMemberEvent = 0;
+		    	numPageBuildEvent = 0;
+		    	numPublicEvent = 0;
+		    	numPullRequestEvent = 0;
+		    	numPullRequestReviewCommentEvent = 0;
+		    	numPushEvent = 0;
+		    	numReleaseEvent = 0;
+		    	numStatusEvent = 0;
+		    	numTeamAddEvent = 0;
+		    	numWatchEvent = 0;
+		      	
 	    		for (int i = 0; i < listSize; i++) 
 	    		{
 	    			JSONObject tempEventInfo = mJsonArray.getJSONObject(i);
@@ -1118,7 +1225,7 @@ public class MainActivity extends DroidGap
     }
     
     // The method that displays the popup.
-  	private void showEventPopup(final int index) 
+  	private void showEventPopup(final int index, String title) 
   	{
   		LOG.i("WAFFLE","calling popup");
   		int popupWidth = 300;
@@ -1149,8 +1256,11 @@ public class MainActivity extends DroidGap
    
   		// Displaying the popup at the specified location, + offsets.
   		popupWindow.showAtLocation(layout, Gravity.NO_GRAVITY, (width - popupWidth)/2, (height - popupHeight)/2);
+  		
+  		TextView popupLabel = (TextView) layout.findViewById(R.id.popuptext1);
+  		popupLabel.setText(title);
    
-  		// Getting a reference to Close button, and close the popup when clicked.
+  		// Getting a reference to GoToPage button, and launch the website when clicked.
   		Button gotoPage = (Button) layout.findViewById(R.id.goToPage);
   		gotoPage.setOnClickListener
   		(
@@ -1165,6 +1275,7 @@ public class MainActivity extends DroidGap
   			}
   		);
   		
+  		// Getting a reference to Close button, and close the popup when clicked.
   		Button close = (Button) layout.findViewById(R.id.close);
   		close.setOnClickListener
   		(
