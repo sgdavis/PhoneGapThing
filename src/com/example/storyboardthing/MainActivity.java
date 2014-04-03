@@ -299,7 +299,6 @@ public class MainActivity extends DroidGap
 	{
 		if(notWorking == true)
 		{
-			LOG.i("WAFFLE", "firing new thread" + delayTimer);
 			notWorking = false;
 			runner = new AsyncTaskRunner();
 		    
@@ -307,10 +306,6 @@ public class MainActivity extends DroidGap
 		    	runner.executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR);
 		    else
 		    	runner.execute();
-		}
-		else
-		{
-			LOG.i("WAFFLE", "tried to fire new thread");
 		}
 	    
 	    if(stage.equalsIgnoreCase("events"))
@@ -533,7 +528,6 @@ public class MainActivity extends DroidGap
     	}
     	catch (JSONException e)
     	{
-			LOG.i("WAFFLE", "cannot summarize " + e.getMessage());
     	}
     	
 		return ret;
@@ -683,7 +677,6 @@ public class MainActivity extends DroidGap
     	}
     	catch (JSONException e)
     	{
-			LOG.i("WAFFLE", "cannot summarize " + e.getMessage());
     	}
     	
     	return ret;
@@ -828,7 +821,6 @@ public class MainActivity extends DroidGap
     	}
     	catch (JSONException e)
     	{
-			LOG.i("WAFFLE", "cannot summarize " + e.getMessage());
     	}
     	
     	return ret;
@@ -873,11 +865,8 @@ public class MainActivity extends DroidGap
 	  		try
 			{
 		      	GitHub github = GitHub.connectUsingPassword(username, password);
-		      	LOG.i("WAFFLE", "connected");
 		      	GHMyself myself = github.getMyself();
-		      	LOG.i("WAFFLE", "found myself");
 		      	repositoryList = myself.listAllRepositories().asList();
-		      	LOG.i("WAFFLE", "got repo list");
 		      	
 		      	String tempString = "";
 		      	
@@ -897,16 +886,12 @@ public class MainActivity extends DroidGap
 	  	  		    		repositoryOwnerList.add("unknown");
 	  	  		    	}
 		      		}
-		      		
-		      		LOG.i("WAFFLE", tempString );
 		      	}
 		      	
 		      	displayRepo();
 			}
 			catch(IOException e)
 			{
-				LOG.i("WAFFLE", "FAILED");
-				
 				runOnUiThread
 		  		(
 		  			new Runnable() 
@@ -1108,9 +1093,6 @@ public class MainActivity extends DroidGap
     		}
      
     		BufferedReader br = new BufferedReader(new InputStreamReader((response.getEntity().getContent())));
-     
-    		String output;
-    		System.out.println("Output from Server .... \n");
     		
     		JSONArray mJsonArray;
 			try 
@@ -1190,10 +1172,6 @@ public class MainActivity extends DroidGap
 	    			{
 	    				continue;
 	    			}
-	    			else if(eventDate != null)
-	    			{
-	    				LOG.i("MEGAWAFFLE","event date: " + eventDate.toString() + " - cutoff date: " + cutoffDate.toString());
-	    			}
 	    			
 	    			jsonEventList.add( tempEventInfo );
 	    			
@@ -1228,14 +1206,12 @@ public class MainActivity extends DroidGap
     	{
     		e.printStackTrace();
     	}
-        LOG.i("MEGAWAFFLE","FAILED");
         return "";
     }
     
  // The method that displays the popup.
    	private void showEventPopup(final int index, String title) 
    	{
-   		LOG.i("WAFFLE","calling popup");
    		int popupWidth = 300;
    		int popupHeight = 300;
    		
@@ -1308,7 +1284,6 @@ public class MainActivity extends DroidGap
  // The method that displays the popup.
    	private void showSummaryPopup() 
    	{
-   		LOG.i("WAFFLE","calling popup");
    		int popupWidth = 300;
    		int popupHeight = 300;
    		
