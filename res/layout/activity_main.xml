@@ -31,10 +31,19 @@
 	</LinearLayout>
 
     <Button
-        android:id="@+id/notificationButton"
+        android:id="@+id/summaryButton"
         android:layout_width="fill_parent"
         android:layout_height="wrap_content"
         android:layout_below="@+id/editTextLine"
+        android:layout_marginLeft="0dp"
+        android:layout_marginTop="0dp"
+        android:text="Events Summary" />
+    
+    <Button
+        android:id="@+id/notificationButton"
+        android:layout_width="fill_parent"
+        android:layout_height="wrap_content"
+        android:layout_below="@+id/summaryButton"
         android:layout_marginLeft="0dp"
         android:layout_marginTop="0dp"
         android:text="Login" />

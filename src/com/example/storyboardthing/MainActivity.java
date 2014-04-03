@@ -74,6 +74,7 @@ public class MainActivity extends DroidGap
 	private long lastChecked;
 	private Context myContext;
 	private Button notificationButton;
+	private Button summaryButton;
 	
 	private TextView firstLabel;
 	private TextView secondLabel;
@@ -111,18 +112,14 @@ public class MainActivity extends DroidGap
 	private Handler handler;
 	
 	private boolean notWorking;
-	private int MaxEventListSize = 30;
+	private int MaxEventListSize = 100;
 	
 	private int numCommitCommentEvent = 0;
 	private int numCreateEvent = 0;
 	private int numDeleteEvent = 0;
 	private int numDeploymentEvent = 0;
 	private int numDeploymentStatusEvent = 0;
-	private int numDownloadEvent = 0;
-	private int numFollowEvent = 0;
 	private int numForkEvent = 0;
-	private int numForkApplyEvent = 0;
-	private int numGistEvent = 0;
 	private int numGollumEvent = 0;
 	private int numIssueCommentEvent = 0;
 	private int numIssuesEvent = 0;
@@ -134,8 +131,7 @@ public class MainActivity extends DroidGap
 	private int numPushEvent = 0;
 	private int numReleaseEvent = 0;
 	private int numStatusEvent = 0;
-	private int numTeamAddEvent = 0;
-	private int numWatchEvent = 0;
+	private int numTotalEvent = 0;
 	
 	@Override
 	public void onCreate(Bundle savedInstanceState) 
@@ -149,6 +145,19 @@ public class MainActivity extends DroidGap
 		setContentView(R.layout.activity_main);
 		
 		notificationButton = (Button) findViewById(R.id.notificationButton);
+		summaryButton = (Button) findViewById(R.id.summaryButton);
+		summaryButton.setVisibility(View.GONE);
+		summaryButton.setOnClickListener
+		(
+			new View.OnClickListener() 
+			{
+				@Override
+				public void onClick(View v) 
+				{
+					showSummaryPopup();
+				}
+			}
+		);
 		firstLabel  = (TextView) findViewById(R.id.itemLabel1);
 		secondLabel  = (TextView) findViewById(R.id.itemLabel2);
 			
@@ -265,6 +274,7 @@ public class MainActivity extends DroidGap
 		else if(stage.equalsIgnoreCase("events") || stage.equalsIgnoreCase("eventsSpecial"))
 	    {
 			stage = "repos";
+			summaryButton.setVisibility(View.GONE);
 			
 			EditText tempEdit = ( (EditText) findViewById(R.id.editText1) );
 			tempEdit.setText("");
@@ -708,6 +718,7 @@ public class MainActivity extends DroidGap
 			}
 	    	
 	    	ret = actor.getString("login") + " - " + eventType + "\n" + eventDate.toString();
+	    	numTotalEvent++;
     		
     		if(eventType.equals("CommitCommentEvent"))
     		{
@@ -757,6 +768,7 @@ public class MainActivity extends DroidGap
     		{
     	    	JSONArray pages = new JSONArray( payload.getString("pages") );
     	    	numGollumEvent += pages.length();
+    	    	numTotalEvent += (pages.length() - 1);
     		}
     	    else if(eventType.equals("IssueCommentEvent"))
     		{
@@ -789,6 +801,7 @@ public class MainActivity extends DroidGap
     	    else if(eventType.equals("PushEvent"))
     		{
     	    	numPushEvent += payload.getInt("size");
+    	    	numTotalEvent += (payload.getInt("size") - 1);
     		}
     	    else if(eventType.equals("ReleaseEvent"))
     		{
@@ -939,6 +952,7 @@ public class MainActivity extends DroidGap
 	  	  			public void run() 
 	  	  			{ 
 	  	  				notificationButton.setText("BACK");
+	  	  				summaryButton.setVisibility(View.VISIBLE);
 		  	  			final ListView listview = (ListView) findViewById(R.id.listview1);		
 			  	  	    final ArrayAdapter adapter = new ArrayAdapter(myContext, android.R.layout.simple_list_item_1, stringList);
 			  	  	    listview.setAdapter(adapter);
@@ -1133,16 +1147,11 @@ public class MainActivity extends DroidGap
 		      	}
 		      	jsonEventList = new ArrayList<JSONObject>();
 		      	
-		      	numCommitCommentEvent = 0;
 		    	numCreateEvent = 0;
 		    	numDeleteEvent = 0;
 		    	numDeploymentEvent = 0;
 		    	numDeploymentStatusEvent = 0;
-		    	numDownloadEvent = 0;
-		    	numFollowEvent = 0;
 		    	numForkEvent = 0;
-		    	numForkApplyEvent = 0;
-		    	numGistEvent = 0;
 		    	numGollumEvent = 0;
 		    	numIssueCommentEvent = 0;
 		    	numIssuesEvent = 0;
@@ -1154,8 +1163,7 @@ public class MainActivity extends DroidGap
 		    	numPushEvent = 0;
 		    	numReleaseEvent = 0;
 		    	numStatusEvent = 0;
-		    	numTeamAddEvent = 0;
-		    	numWatchEvent = 0;
+		    	numTotalEvent = 0;
 		      	
 	    		for (int i = 0; i < listSize; i++) 
 	    		{
@@ -1224,75 +1232,208 @@ public class MainActivity extends DroidGap
         return "";
     }
     
-    // The method that displays the popup.
-  	private void showEventPopup(final int index, String title) 
-  	{
-  		LOG.i("WAFFLE","calling popup");
-  		int popupWidth = 300;
-  		int popupHeight = 300;
-  		
-  		Display display = getWindowManager().getDefaultDisplay();
-  		Point size = new Point();
-  		display.getSize(size);
-  		int width = size.x;
-  		int height = size.y;
-   
-  		//setContentView(R.layout.popup);
-  	
-  		// Inflate the popup_layout.xml
-  		LinearLayout viewGroup = (LinearLayout) findViewById(R.id.popupPanel);
-  		LayoutInflater layoutInflater = (LayoutInflater) myContext.getSystemService(Context.LAYOUT_INFLATER_SERVICE);
-  		View layout = layoutInflater.inflate(R.layout.popup, viewGroup, false);
-   
-  		// Creating the PopupWindow
-  		popupWindow = new PopupWindow(myContext);
-  		popupWindow.setContentView(layout);
-  		popupWindow.setWidth(popupWidth);
-		popupWindow.setHeight(popupHeight);
-		popupWindow.setFocusable(true);
-   
-  		// Clear the default translucent background
-  		popupWindow.setBackgroundDrawable(new BitmapDrawable());
-   
-  		// Displaying the popup at the specified location, + offsets.
-  		popupWindow.showAtLocation(layout, Gravity.NO_GRAVITY, (width - popupWidth)/2, (height - popupHeight)/2);
-  		
-  		TextView popupLabel = (TextView) layout.findViewById(R.id.popuptext1);
-  		popupLabel.setText(title);
-   
-  		// Getting a reference to GoToPage button, and launch the website when clicked.
-  		Button gotoPage = (Button) layout.findViewById(R.id.goToPage);
-  		gotoPage.setOnClickListener
-  		(
-  			new View.OnClickListener() 
-  			{
-  				@Override
-  				public void onClick(View v) 
-  				{
-  					Intent intent = new Intent(Intent.ACTION_VIEW, Uri.parse( linkStringList.get(index) ));
-  					startActivity(intent);
-  				}
-  			}
-  		);
-  		
-  		// Getting a reference to Close button, and close the popup when clicked.
-  		Button close = (Button) layout.findViewById(R.id.close);
-  		close.setOnClickListener
-  		(
-  			new View.OnClickListener() 
-  			{
-  				@Override
-  				public void onClick(View v) 
-  				{
-  					popupWindow.dismiss();
-  				}
-  			}
-  		);
-  		
-  		TextView popupTextView = (TextView) layout.findViewById(R.id.popuptext2);
-		popupTextView.setText(longStringList.get(index));
-		popupTextView.setMovementMethod(new ScrollingMovementMethod());
-  		
-  		//setContentView(R.layout.activity_main);
-  	}
+ // The method that displays the popup.
+   	private void showEventPopup(final int index, String title) 
+   	{
+   		LOG.i("WAFFLE","calling popup");
+   		int popupWidth = 300;
+   		int popupHeight = 300;
+   		
+   		Display display = getWindowManager().getDefaultDisplay();
+   		Point size = new Point();
+   		display.getSize(size);
+   		int width = size.x;
+   		int height = size.y;
+    
+   		//setContentView(R.layout.popup);
+   	
+   		// Inflate the popup_layout.xml
+   		LinearLayout viewGroup = (LinearLayout) findViewById(R.id.popupPanel);
+   		LayoutInflater layoutInflater = (LayoutInflater) myContext.getSystemService(Context.LAYOUT_INFLATER_SERVICE);
+   		View layout = layoutInflater.inflate(R.layout.popup, viewGroup, false);
+    
+   		// Creating the PopupWindow
+   		popupWindow = new PopupWindow(myContext);
+   		popupWindow.setContentView(layout);
+   		popupWindow.setWidth(popupWidth);
+ 		popupWindow.setHeight(popupHeight);
+ 		popupWindow.setFocusable(true);
+    
+   		// Clear the default translucent background
+   		popupWindow.setBackgroundDrawable(new BitmapDrawable());
+    
+   		// Displaying the popup at the specified location, + offsets.
+   		popupWindow.showAtLocation(layout, Gravity.NO_GRAVITY, (width - popupWidth)/2, (height - popupHeight)/2);
+   		
+   		TextView popupLabel = (TextView) layout.findViewById(R.id.popuptext1);
+   		popupLabel.setText(title);
+    
+   		// Getting a reference to GoToPage button, and launch the website when clicked.
+   		Button gotoPage = (Button) layout.findViewById(R.id.goToPage);
+   		gotoPage.setVisibility(View.VISIBLE);
+   		gotoPage.setOnClickListener
+   		(
+   			new View.OnClickListener() 
+   			{
+   				@Override
+   				public void onClick(View v) 
+   				{
+   					Intent intent = new Intent(Intent.ACTION_VIEW, Uri.parse( linkStringList.get(index) ));
+   					startActivity(intent);
+   				}
+   			}
+   		);
+   		
+   		// Getting a reference to Close button, and close the popup when clicked.
+   		Button close = (Button) layout.findViewById(R.id.close);
+   		close.setOnClickListener
+   		(
+   			new View.OnClickListener() 
+   			{
+   				@Override
+   				public void onClick(View v) 
+   				{
+   					popupWindow.dismiss();
+   				}
+   			}
+   		);
+   		
+   		TextView popupTextView = (TextView) layout.findViewById(R.id.popuptext2);
+ 		popupTextView.setText(longStringList.get(index));
+ 		popupTextView.setMovementMethod(new ScrollingMovementMethod());
+   		
+   		//setContentView(R.layout.activity_main);
+   	}
+   	
+ // The method that displays the popup.
+   	private void showSummaryPopup() 
+   	{
+   		LOG.i("WAFFLE","calling popup");
+   		int popupWidth = 300;
+   		int popupHeight = 300;
+   		
+   		Display display = getWindowManager().getDefaultDisplay();
+   		Point size = new Point();
+   		display.getSize(size);
+   		int width = size.x;
+   		int height = size.y;
+    
+   		//setContentView(R.layout.popup);
+   	
+   		// Inflate the popup_layout.xml
+   		LinearLayout viewGroup = (LinearLayout) findViewById(R.id.popupPanel);
+   		LayoutInflater layoutInflater = (LayoutInflater) myContext.getSystemService(Context.LAYOUT_INFLATER_SERVICE);
+   		View layout = layoutInflater.inflate(R.layout.popup, viewGroup, false);
+    
+   		// Creating the PopupWindow
+   		popupWindow = new PopupWindow(myContext);
+   		popupWindow.setContentView(layout);
+   		popupWindow.setWidth(popupWidth);
+ 		popupWindow.setHeight(popupHeight);
+ 		popupWindow.setFocusable(true);
+    
+   		// Clear the default translucent background
+   		popupWindow.setBackgroundDrawable(new BitmapDrawable());
+    
+   		// Displaying the popup at the specified location, + offsets.
+   		popupWindow.showAtLocation(layout, Gravity.NO_GRAVITY, (width - popupWidth)/2, (height - popupHeight)/2);
+   		
+   		TextView popupLabel = (TextView) layout.findViewById(R.id.popuptext1);
+   		popupLabel.setText("Events Summary");
+    
+   		// Getting a reference to GoToPage button, and launch the website when clicked.
+   		Button gotoPage = (Button) layout.findViewById(R.id.goToPage);
+   		gotoPage.setVisibility(View.GONE);
+   		
+   		// Getting a reference to Close button, and close the popup when clicked.
+   		Button close = (Button) layout.findViewById(R.id.close);
+   		close.setOnClickListener
+   		(
+   			new View.OnClickListener() 
+   			{
+   				@Override
+   				public void onClick(View v) 
+   				{
+   					popupWindow.dismiss();
+   				}
+   			}
+   		);
+   		
+   		String summaryText = numTotalEvent + " events in the last checking period.\n\n";
+   		
+   		if(numCommitCommentEvent != 0)
+   		{
+   			summaryText += (numCommitCommentEvent + " Commit Comment(s)\n");
+   		}
+   		if(numCreateEvent != 0)
+   		{
+   			summaryText += (numCreateEvent + " Creation Event(s)\n");
+   		}
+   		if(numDeleteEvent != 0)
+   		{
+   			summaryText += (numDeleteEvent + " Deletion Event(s)\n");
+   		}
+   		if(numDeploymentEvent != 0)
+   		{
+   			summaryText += (numDeploymentEvent + " Deployment Event(s)\n");
+   		}
+   		if(numDeploymentStatusEvent != 0)
+   		{
+   			summaryText += (numDeploymentStatusEvent + " Change(s) to Deployment Status\n");
+   		}
+   		if(numForkEvent != 0)
+   		{
+   			summaryText += (numForkEvent + " Fork Event(s)\n");
+   		}
+   		if(numGollumEvent != 0)
+   		{
+   			summaryText += (numGollumEvent + " Wiki Change(s)\n");
+   		}
+   		if(numIssueCommentEvent != 0)
+   		{
+   			summaryText += (numIssueCommentEvent + " Issue Comment(s)\n");
+   		}
+   		if(numIssuesEvent != 0)
+   		{
+   			summaryText += (numIssuesEvent + " Issue Event(s)\n");
+   		}
+   		if(numMemberEvent != 0)
+   		{
+   			summaryText += (numMemberEvent + " New Member(s)\n");
+   		}
+   		if(numPageBuildEvent != 0)
+   		{
+   			summaryText += (numPageBuildEvent + " Page(s) Built\n");
+   		}
+   		if(numPublicEvent != 0)
+   		{
+   			summaryText += (numPublicEvent + " Change(s) to Public\n");
+   		}
+   		if(numPullRequestEvent != 0)
+   		{
+   			summaryText += (numPullRequestEvent + " Pull Request(s)\n");
+   		}
+   		if(numPullRequestReviewCommentEvent != 0)
+   		{
+   			summaryText += (numPullRequestReviewCommentEvent + " Pull Request Comment(s)\n");
+   		}
+   		if(numPushEvent != 0)
+   		{
+   			summaryText += (numPushEvent + " Commit(s)\n");
+   		}
+   		if(numReleaseEvent != 0)
+   		{
+   			summaryText += (numReleaseEvent + " Release(s)\n");
+   		}
+   		if(numStatusEvent != 0)
+   		{
+   			summaryText += (numStatusEvent + " Status Change(s)\n");
+   		}
+   		
+   		TextView popupTextView = (TextView) layout.findViewById(R.id.popuptext2);
+ 		popupTextView.setText(summaryText);
+ 		popupTextView.setMovementMethod(new ScrollingMovementMethod());
+   		
+   		//setContentView(R.layout.activity_main);
+   	}
 }
