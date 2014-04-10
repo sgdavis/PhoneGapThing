@@ -274,8 +274,15 @@ public class MainActivity extends DroidGap
 	@Override
 	public void onDestroy()
 	{
-		runner.cancel(true);
-		handler.removeCallbacksAndMessages(null);
+		if(runner != null)
+		{
+			runner.cancel(true);
+		}
+		if(handler != null)
+		{
+			handler.removeCallbacksAndMessages(null);
+		}
+		super.onDestroy();
 	}
 	
 	/** Handles UI modification when moving from one stage to another (ie login -> repo)
